@@ -1,0 +1,113 @@
+\documentclass[a4paper, 11pt]{article}
+
+\usepackage[top=0.7in, bottom=0.7in]{geometry}
+
+%------------------------------------------------------------
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+%------------------------------------------------------------
+
+\usepackage[style=numeric, sorting=ynt, doi=false, maxnames=10]{biblatex}
+\addbibresource{main.bib}
+
+%------------------------------------------------------------
+
+\usepackage{macros}
+
+%------------------------------------------------------------
+
+\title{\Saturn: a library of verified lockfree data structures for \OCaml~5}
+\date{\today}
+\author{
+  Clément Allain (INRIA) \\
+  Vesa Karvonen (Tarides) \\
+  Carine Morel (Tarides)
+}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+
+\begin{document}
+
+\maketitle
+
+\section{Presentation}
+
+We present \Saturn, a new \OCaml~5 library available on \opam.
+\Saturn offers a collection of concurrent lockfree data structures: stack, queue, skiplist, hash table, work-stealing deque, etc.
+In particular, the implementations of these data structures do not use any locking mechanism and guaranty system-wide progress.
+They are also faster than blocking implementations.
+The \Domainslib library already uses \Saturn's work-stealing deque.
+
+Designing such data structures can be very tricky.
+Therefore, we aim at providing \OCaml~5 programmers with a sound and efficient library saving them the trouble.
+\Saturn is well tested, benchmarked and in part verified.
+
+\section{Library design}
+
+\Saturn has been designed to meet the needs of programmers looking for lockfree implementations of standard data structures---typically to replace blocking implementations.
+From this perspective, it can be considered as a standard library for lockfree data structures.
+More precisely, \Saturn currently features: TODO.
+
+As any standard library, though, \Saturn is not tailored to more demanding needs: specialized data structures fitting some specific contexts.
+However, experienced programmers looking for exotic variants may still find \Saturn's standard algorithms useful as a basis to implement their own.
+
+Regarding the performance of \Saturn, there is often a tension between improving efficiency and remaining in the safe fragment of \OCaml~5.
+In particular, due to the relatively poor compiler support for atomic accesses, it is tempting to bypass current limitations by using unsafe features of the language.
+Although these optimizations are performed with care and should not break anything for regular uses, memory safety is not guaranteed for illegal uses and the interaction with \Flambda is not clear.
+As a consequence, we propose two versions of \Saturn: a safe version and an unsafe version.
+While most users should find the safe version efficient enough for their needs, daring users may prefer the unsafe version provided they encapsulate it correctly and verify their code somehow.
+
+\section{Verification}
+
+Lockfree algorithms are notoriously difficult to get right.
+To provide stronger guarantees, we have verified part of \Saturn's data structures and hope to verify the entire library in the future.
+Moreover, one important benefit is that we get formal specifications for verified data structures.
+
+This verification effort has been conducted using \Iris~\cite{DBLP:journals/jfp/JungKJBBD18}, a state-of-the-art mechanized \emph{concurrent separation logic}.
+In particulier, all proofs are formalized in \Coq.
+
+A common criterion to specify concurrent operations on shared data structures is \emph{linearizability}.
+The equivalent \Iris notion is \emph{logical atomicity}: there exists a point in time when a concurrent operation atomically takes effect (the linearization point).
+This statement takes the form of an \emph{atomic specification}:
+
+\[
+  \aspec{
+    \mathrm{queue \mathhyphen inv}\ t
+  }{
+    \mathit{vs}
+  }{
+    \mathrm{queue \mathhyphen model}\ t\  \mathit{vs}
+  }{
+    \texttt{queue\_push}\ t\ v
+  }{
+    \mathrm{queue \mathhyphen model}\ t\  (\mathit{vs} \mdoubleplus [v])
+  }{
+    \texttt{()}
+  }{
+    \mathrm{True}
+  }
+\]
+
+In this example, we specify the \texttt{queue\_push} operation from an implementation of a concurrent queue.
+Similarly to \href{https://en.wikipedia.org/wiki/Hoare_logic}{Hoare triples}, the two assertions inside curly brackets express the precondition and postcondition.
+Here, the $\mathrm{queue \mathhyphen inv}\ t$ precondition represents the queue invariant.
+As it is persistent, we do not need to give it back in the postcondition.
+The other two assertions inside angle brackets express the \emph{atomic precondition} and \emph{atomic postcondition}.
+Basically, they specify the linearization point of the operation: during the execution of \texttt{queue\_push}, the logical model of the queue is atomically updated from $\mathit{vs}$ to $\mathit{vs} \mdoubleplus [v]$, in other words $v$ is atomically pushed at the back of the queue.
+
+As a final note, we emphasize that our verification assumes a sequentially consistent memory model.
+Nevertheless, \OCaml~5's relaxed memory model has been formalized~\cite{DBLP:journals/pacmpl/MevelJP20} in \Iris.
+It should be possible and is future work to adapt our specifications and proofs to support it.
+
+\section{Talk proposal}
+
+In our talk, we will introduce \Saturn, including the main data structures and design guidelines.
+We will also discuss ongoing work on verifying the library using the \Iris concurrent separation logic.
+
+\printbibliography
+
+\end{document}

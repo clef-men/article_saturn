@@ -1,0 +1,36 @@
+\RequirePackage{xspace}
+\RequirePackage{hyperref}
+
+%------------------------------------------------------------
+
+\newcommand{\OCaml}{\textsc{OCaml}\xspace}
+\newcommand{\Flambda}{\href{https://ocaml.org/manual/5.2/flambda.html}{\textsc{Flambda}}\xspace}
+\newcommand{\Saturn}{\href{https://github.com/ocaml-multicore/saturn}{\textsc{Saturn}}\xspace}
+\newcommand{\Coq}{\href{https://coq.inria.fr/}{\textsc{Coq}}\xspace}
+\newcommand{\Iris}{\href{https://iris-project.org/}{\textsc{Iris}}\xspace}
+\newcommand{\opam}{\href{https://opam.ocaml.org/}{\texttt{opam}}\xspace}
+\newcommand{\Domainslib}{\href{https://github.com/ocaml-multicore/domainslib}{\texttt{Domainslib}}\xspace}
+\newcommand{\Eio}{\href{https://github.com/ocaml-multicore/eio}{\texttt{Eio}}\xspace}
+
+%------------------------------------------------------------
+
+\newcommand{\mathhyphen}{{\hbox{-}}}
+
+\newcommand\doubleplus{+\kern-1.3ex+\kern0.8ex}
+\newcommand\mdoubleplus{\ensuremath{\mathbin{+\mkern-10mu+}}}
+
+%------------------------------------------------------------
+
+\newcommand{\aspec}[7]{%
+	\begin{array}{c}
+			\left\lbrace\, #1 \,\right\rbrace
+		\\ \hline
+			\left\langle\, \forall #2 \ldotp #3 \,\right\rangle
+		\\ \hline
+			#4
+		\\ \hline
+			\left\langle\, #5 \,\right\rangle
+		\\ \hline
+			\left\lbrace\, #6 \ldotp #7 \,\right\rbrace
+	\end{array}
+}
