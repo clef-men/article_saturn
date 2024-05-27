@@ -48,15 +48,15 @@ In this context, \Saturn aims to assist \OCaml~5 programmers by providing a coll
 \section{Library design}
 
 \Saturn has been designed to meet the needs of programmers looking for parallelism-safe implementations of standard data structures. The choices of data structures proposed in have been made to cover a wide range of use cases, from simple stacks and queues to more complex data structures like skiplists and hash tables.  More precisely, \Saturn currently features : 
-(A) numerous queues : a lockfree queue based on the well-known Michael and Scott queue algorithm, a single-producer single-consumer lockfree queue, a multiple-producers single-consumer queue, and a bounded queue; 
-(B) two stacks : a lockfree stack based on the Treiber stack algorithm, and a bounded stack. % TODO : add ref
+(A) numerous queues : a lockfree queue based on the well-known Michael and Scott queue algorithm~\cite{michael1996simple}, a single-producer single-consumer lockfree queue, a multiple-producers single-consumer queue, and a bounded queue; 
+(B) two stacks : a lockfree stack based on the Treiber stack algorithm~\cite{treiber1986systems}, and a bounded stack. % TODO : add ref
 (C) a lockfree work-stealing deque,
 (D) a lockfree, bounded bag,
 (E) a lockfree hash table, 
 (F) a lockfree skiplist.
 
 % How we choose the data structures and algorithms
-The implemented algorithms are either well-known, such as the Treiber stack, or inspired by such algorithms. Each algorithm was adapted to work with and take advantage of the \OCaml memory model. For instance, the Michael-Scott lock-free queue employs a standard algorithm but avoids its memory leak (see the Verification section). ( TODO add a note about using DRF-SC memory model for perf).
+The implemented algorithms are either well-known, such as the Treiber stack~\cite{treiber1986systems}, or inspired by such algorithms. Each algorithm was adapted to work with and take advantage of the \OCaml memory model. For instance, the Michael-Scott lock-free queue~\cite{michael1996simple} employs a standard algorithm but avoids its memory leak (see the Verification section). ( TODO add a note about using DRF-SC memory model for perf).
 
 % Safe/unsafe versions
 Regarding performance, \Saturn provides benchmarks for each data structure, and significant effort has been dedicated to optimizations. However, there is often a tension between improving efficiency and remaining within the safe fragment of \OCaml~5. In particular, \OCaml~5 lacks some important features to avoid false sharing. False sharing occurs when several shared data items are contained in a single cache line. When different domains simultaneously access these data items, they are forced to synchronize, even if they are not modifying the same data. To prevent this, we need to ensure that shared data items are not in the same cache line, which essentially requires padding them. Currently, only atomic variables can be padded (using Atomic.make\_contended, available since version 5.2.0), but it is often useful to do more. 
@@ -78,11 +78,11 @@ There are other missing features in \OCaml~5, such as the inability to remove fe
 
 
 \section{Tests}
-In multicore programming, it is essential to test not only the correctness of the data structures but also to verify sequential consistency and lock-freedom when expected. \Saturn has been thoroughly tested using mainly two different tools: \texttt{dscheck} and \texttt{stm}. 
+In multicore programming, it is essential to test not only the correctness of the data structures but also to verify sequential consistency and lock-freedom when expected. \Saturn has been thoroughly tested using mainly two different tools: \dscheck and \STM. 
 
-\texttt{STM} is used not only for unit testing but also for verifying sequential consistency. It automatically generates random full programs using the provided API—in the case of \Saturn, a data structure. These programs are executed in two domains, and all results are checked based on the post-conditions of each function, providing unit testing. Simultaneously, \texttt{STM} verifies sequential consistency by ensuring that all intermediate states can be explained by a sequential execution of the calls.
+\STM is used not only for unit testing but also for verifying sequential consistency. It automatically generates random full programs using the provided API—in the case of \Saturn, a data structure. These programs are executed in two domains, and all results are checked based on the post-conditions of each function, providing unit testing. Simultaneously, \STM verifies sequential consistency by ensuring that all intermediate states can be explained by a sequential execution of the calls.
 
-\texttt{dscheck} is a model checker : it is designed to compute all possible interleavings of a given program and verify that each one returns the expected result. This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings. Additionally, \texttt{dscheck} can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present.
+\dscheck is a model checker : it is designed to compute all possible interleavings of a given program and verify that each one returns the expected result. This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings. Additionally, \dscheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present.
 
 \section{Formal verification}
 
