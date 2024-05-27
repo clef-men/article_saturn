@@ -19,7 +19,7 @@
 
 %------------------------------------------------------------
 
-\title{\Saturn: a library of verified lockfree data structures for \OCaml~5}
+\title{\Saturn: a library of verified parallelisme-safe data structures for \OCaml~5}
 \date{\today}
 \author{
   Clément Allain (INRIA) \\
@@ -34,34 +34,57 @@
 
 \maketitle
 
-\section{Presentation}
+\section{Abstract}
+We present \Saturn, a new \OCaml~5 library available on \opam. \Saturn offers a collection of parallelism-safe data structures (stack, queue, skiplist, hash table, work-stealing deque, etc.) for \OCaml~5 that have been designed, tested, and formally verified to ensure not only parallelism safety but also performance.
 
-We present \Saturn, a new \OCaml~5 library available on \opam.
-\Saturn offers a collection of concurrent lockfree data structures: stack, queue, skiplist, hash table, work-stealing deque, etc.
-In particular, the implementations of these data structures do not use any locking mechanism and guaranty system-wide progress.
-They are also faster than blocking implementations.
-The \Domainslib library already uses \Saturn's work-stealing deque.
+\section{Motivation}
 
-Designing such data structures can be very tricky.
-Therefore, we aim at providing \OCaml~5 programmers with a sound and efficient library saving them the trouble.
-\Saturn is well tested, benchmarked and in part verified.
+Sharing data between multiple threads or cores is a well-known and challenging problem. A naive approach would be to take a sequential data structure and add locks to protect it. However, this is often not the best solution. Firstly, if performance is a concern, this approach is likely insufficient: no operation will run in parallel on such a data structure, and locks introduce significant contention. Secondly, it may not be a "safe" solution, as it can lead to safety and liveness issues such as deadlocks, starvation, and priority inversion.
+
+In contrast, more sophisticated approaches, like lock-free implementations, require careful design as they introduce their own set of challenging bugs, such as the ABA problem (largely mitigated in \OCaml~5), data races, and unexpected behaviors due to non-linearizability.
+
+In this context, \Saturn aims to assist \OCaml~5 programmers by providing a collection of well-tested and benchmarked data structures designed to ensure the proper safety and liveness properties in parallel programming.
 
 \section{Library design}
 
-\Saturn has been designed to meet the needs of programmers looking for lockfree implementations of standard data structures---typically to replace blocking implementations.
-From this perspective, it can be considered as a standard library for lockfree data structures.
-More precisely, \Saturn currently features: TODO.
+\Saturn has been designed to meet the needs of programmers looking for parallelism-safe implementations of standard data structures. The choices of data structures proposed in have been made to cover a wide range of use cases, from simple stacks and queues to more complex data structures like skiplists and hash tables.  More precisely, \Saturn currently features : 
+(A) numerous queues : a lockfree queue based on the well-known Michael and Scott queue algorithm, a single-producer single-consumer lockfree queue, a multiple-producers single-consumer queue, and a bounded queue; 
+(B) two stacks : a lockfree stack based on the Treiber stack algorithm, and a bounded stack. % TODO : add ref
+(C) a lockfree work-stealing deque,
+(D) a lockfree, bounded bag,
+(E) a lockfree hash table, 
+(F) a lockfree skiplist.
 
-As any standard library, though, \Saturn is not tailored to more demanding needs: specialized data structures fitting some specific contexts.
-However, experienced programmers looking for exotic variants may still find \Saturn's standard algorithms useful as a basis to implement their own.
+% How we choose the data structures and algorithms
+The implemented algorithms are either well-known, such as the Treiber stack, or inspired by such algorithms. Each algorithm was adapted to work with and take advantage of the \OCaml memory model. For instance, the Michael-Scott lock-free queue employs a standard algorithm but avoids its memory leak (see the Verification section). ( TODO add a note about using DRF-SC memory model for perf).
 
-Regarding the performance of \Saturn, there is often a tension between improving efficiency and remaining in the safe fragment of \OCaml~5.
-In particular, due to the relatively poor compiler support for atomic accesses, it is tempting to bypass current limitations by using unsafe features of the language.
-Although these optimizations are performed with care and should not break anything for regular uses, memory safety is not guaranteed for illegal uses and the interaction with \Flambda is not clear.
-As a consequence, we propose two versions of \Saturn: a safe version and an unsafe version.
-While most users should find the safe version efficient enough for their needs, daring users may prefer the unsafe version provided they encapsulate it correctly and verify their code somehow.
+% Safe/unsafe versions
+Regarding performance, \Saturn provides benchmarks for each data structure, and significant effort has been dedicated to optimizations. However, there is often a tension between improving efficiency and remaining within the safe fragment of \OCaml~5. In particular, \OCaml~5 lacks some important features to avoid false sharing. False sharing occurs when several shared data items are contained in a single cache line. When different domains simultaneously access these data items, they are forced to synchronize, even if they are not modifying the same data. To prevent this, we need to ensure that shared data items are not in the same cache line, which essentially requires padding them. Currently, only atomic variables can be padded (using Atomic.make\_contended, available since version 5.2.0), but it is often useful to do more. 
 
-\section{Verification}
+The single-consumer single-producer queue provides a good example of this issue: 
+
+\emph{Add code snippet to show the issue}.
+
+There are other missing features in \OCaml~5, such as the inability to remove fences on atomic accesses, even when they are redundant with the preceding and/or following atomic accesses. Additionally, there is the issue of the extra indirection in arrays of atomics: each cell in such an array is a pointer to an atomic, which is just another pointer with fences. It is tempting to bypass these current limitations by using unsafe features of the language (e.g., \texttt{Obj.magic}). Although these optimizations are performed with care and should not break anything for regular uses, memory safety is not guaranteed for illegal uses and the interaction with compiler optimizations is not clear. As a consequence, we propose two versions of each \Saturn's data structures: a safe version and an unsafe version. While most users should find the safe version efficient enough for their needs, daring users may prefer the unsafe version provided they encapsulate it correctly and verify their code somehow.
+
+% \section{Example of use}
+% It feels it would be nice to have a simple example here to show that it is easy to use the library.
+
+% TODO Possible question :  
+% - When it should not be used ?  
+%   - composability -> see Kcas
+%   - very speficic needs and performance
+% - Is it ready ?
+
+
+\section{Tests}
+In multicore programming, it is essential to test not only the correctness of the data structures but also to verify sequential consistency and lock-freedom when expected. \Saturn has been thoroughly tested using mainly two different tools: \texttt{dscheck} and \texttt{stm}. 
+
+\texttt{STM} is used not only for unit testing but also for verifying sequential consistency. It automatically generates random full programs using the provided API—in the case of \Saturn, a data structure. These programs are executed in two domains, and all results are checked based on the post-conditions of each function, providing unit testing. Simultaneously, \texttt{STM} verifies sequential consistency by ensuring that all intermediate states can be explained by a sequential execution of the calls.
+
+\texttt{dscheck} is a model checker : it is designed to compute all possible interleavings of a given program and verify that each one returns the expected result. This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings. Additionally, \texttt{dscheck} can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present.
+
+\section{Formal verification}
 
 Lockfree algorithms are notoriously difficult to get right.
 To provide stronger guarantees, we have verified part of \Saturn's data structures and hope to verify the entire library in the future.
@@ -107,6 +130,12 @@ It should be possible and is future work to adapt our specifications and proofs 
 
 In our talk, we will introduce \Saturn, including the main data structures and design guidelines.
 We will also discuss ongoing work on verifying the library using the \Iris concurrent separation logic.
+
+
+\section{Conclusion}
+By providing extensively-tested, formally verified and benchmarked parallelism-safe implementation, \Saturn aims to help \OCaml~5 users avoid the pitfalls and intricacies of implementing their own concurrent data structures. 
+
+TODO : Add a sentence about what is to come in the future.
 
 \printbibliography
 
