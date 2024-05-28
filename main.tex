@@ -101,11 +101,19 @@ While most users should find the safe version efficient enough for their needs, 
 % - Is it ready ?
 
 \section{Tests}
-In multicore programming, it is essential to test not only the correctness of the data structures but also to verify sequential consistency and lock-freedom when expected. \Saturn has been thoroughly tested using mainly two different tools: \dscheck and \STM. 
 
-\STM is used not only for unit testing but also for verifying sequential consistency. It automatically generates random full programs using the provided API—in the case of \Saturn, a data structure. These programs are executed in two domains, and all results are checked based on the post-conditions of each function, providing unit testing. Simultaneously, \STM verifies sequential consistency by ensuring that all intermediate states can be explained by a sequential execution of the calls.
+In multicore programming, it is essential to test not only the correctness of the data structures but also to verify sequential consistency and lock-freedom when expected.
+\Saturn has been thoroughly tested using mainly two different tools: \DSCheck and \STM.
 
-\dscheck is a model checker : it is designed to compute all possible interleavings of a given program and verify that each one returns the expected result. This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings. Additionally, \dscheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present.
+\STM is used not only for unit testing but also for verifying sequential consistency.
+It automatically generates random full programs using the provided API---in the case of \Saturn, one data structure.
+These programs are executed in two domains and all results are checked based on the postconditions of each function, providing unit testing.
+Simultaneously, \STM verifies sequential consistency by ensuring that all intermediate states can be explained by a sequential execution of the calls.
+
+\DSCheck is a model checker.
+It is designed to compute all possible interleavings of a given program and verify that each one returns the expected result.
+This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings.
+Additionally, \DSCheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present.
 
 \section{Formal verification}
 
