@@ -58,7 +58,7 @@ In this context, \Saturn provides a collection of standard lock-free data struct
 \Saturn aims at covering a wide range of use cases, from simple stacks and queues to more complex data structures like skiplists and hash tables.
 More precisely, it currently features:
 (A) numerous queues: a queue based on the well-known Michael-Scott queue~\cite{michael1996simple}, a single-producer single-consumer queue, a multiple-producer single-consumer queue and a bounded queue; 
-(B) two stacks: a stack based on the Treiber stack~\cite{treiber1986systems} and a bounded stack; % TODO : add ref
+(B) a stack based on the Treiber stack~\cite{treiber1986systems};
 (C) a work-stealing deque;
 (D) a bounded bag;
 (E) a hash table;
@@ -102,7 +102,7 @@ While most users should find the safe version efficient enough for their needs, 
 
 \section{Tests}
 
-In multicore programming, it is essential to test not only the correctness of the data structures but also to verify sequential consistency and lock-freedom when expected.
+In multicore programming, it is essential to test not only the safety of the data structures but also to verify sequential consistency and lock-freedom when expected.
 \Saturn has been thoroughly tested using mainly two different tools: \DSCheck and \STM.
 
 \STM is used not only for unit testing but also for verifying sequential consistency.
