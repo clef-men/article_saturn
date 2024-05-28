@@ -55,25 +55,41 @@ In this context, \Saturn provides a collection of standard lockfree data structu
 
 \section{Library design}
 
-\Saturn has been designed to meet the needs of programmers looking for parallelism-safe implementations of standard data structures. The choices of data structures proposed in have been made to cover a wide range of use cases, from simple stacks and queues to more complex data structures like skiplists and hash tables.  More precisely, \Saturn currently features : 
-(A) numerous queues : a lockfree queue based on the well-known Michael and Scott queue algorithm~\cite{michael1996simple}, a single-producer single-consumer lockfree queue, a multiple-producers single-consumer queue, and a bounded queue; 
-(B) two stacks : a lockfree stack based on the Treiber stack algorithm~\cite{treiber1986systems}, and a bounded stack. % TODO : add ref
-(C) a lockfree work-stealing deque,
-(D) a lockfree, bounded bag,
-(E) a lockfree hash table, 
-(F) a lockfree skiplist.
+\Saturn aims at covering a wide range of use cases, from simple stacks and queues to more complex data structures like skiplists and hash tables.
+More precisely, it currently features:
+(A) numerous queues: a queue based on the well-known Michael-Scott queue~\cite{michael1996simple}, a single-producer single-consumer queue, a multiple-producer single-consumer queue and a bounded queue; 
+(B) two stacks: a stack based on the Treiber stack~\cite{treiber1986systems} and a bounded stack; % TODO : add ref
+(C) a work-stealing deque;
+(D) a bounded bag;
+(E) a hash table;
+(F) a skiplist.
 
 % How we choose the data structures and algorithms
-The implemented algorithms are either well-known, such as the Treiber stack~\cite{treiber1986systems}, or inspired by such algorithms. Each algorithm was adapted to work with and take advantage of the \OCaml memory model. For instance, the Michael-Scott lock-free queue~\cite{michael1996simple} employs a standard algorithm but avoids its memory leak (see the Verification section). ( TODO add a note about using DRF-SC memory model for perf).
+Most implementations are based on well-known algorithms.
+They have been adapted to work with and take advantage of the \OCaml~5 memory model.
+For instance, we had to rework the Michael-Scott queue to avoid memory leak.
+(TODO add a note about using DRF-SC memory model for perf)
 
 % Safe/unsafe versions
-Regarding performance, \Saturn provides benchmarks for each data structure, and significant effort has been dedicated to optimizations. However, there is often a tension between improving efficiency and remaining within the safe fragment of \OCaml~5. In particular, \OCaml~5 lacks some important features to avoid false sharing. False sharing occurs when several shared data items are contained in a single cache line. When different domains simultaneously access these data items, they are forced to synchronize, even if they are not modifying the same data. To prevent this, we need to ensure that shared data items are not in the same cache line, which essentially requires padding them. Currently, only atomic variables can be padded (using Atomic.make\_contended, available since version 5.2.0), but it is often useful to do more. 
+Regarding performance, \Saturn provides benchmarks for each data structure, and significant effort has been dedicated to optimizations.
+However, there is often a tension between improving efficiency and remaining within the safe fragment of \OCaml~5.
+In particular, \OCaml~5 lacks some important features to avoid false sharing.
+False sharing occurs when several shared data are contained in a single cache line.
+When different domains simultaneously access these data items, they are forced to synchronize, even if they are not modifying the same data.
+To prevent this, we need to ensure that shared data items are not in the same cache line, which essentially requires padding them.
+Currently, only atomic variables can be padded (using \texttt{Atomic.make\_contended}, available since \OCaml 5.2.0), but it is often useful to do more. 
 
 The single-consumer single-producer queue provides a good example of this issue: 
 
 \emph{Add code snippet to show the issue}.
 
-There are other missing features in \OCaml~5, such as the inability to remove fences on atomic accesses, even when they are redundant with the preceding and/or following atomic accesses. Additionally, there is the issue of the extra indirection in arrays of atomics: each cell in such an array is a pointer to an atomic, which is just another pointer with fences. It is tempting to bypass these current limitations by using unsafe features of the language (e.g., \texttt{Obj.magic}). Although these optimizations are performed with care and should not break anything for regular uses, memory safety is not guaranteed for illegal uses and the interaction with compiler optimizations is not clear. As a consequence, we propose two versions of each \Saturn's data structures: a safe version and an unsafe version. While most users should find the safe version efficient enough for their needs, daring users may prefer the unsafe version provided they encapsulate it correctly and verify their code somehow.
+There are other missing features in \OCaml~5, such as the inability to remove fences on atomic accesses, even when they are redundant with the preceding and/or following atomic accesses.
+Additionally, there is the issue of the extra indirection in arrays of atomics: each cell in such an array is a pointer to an atomic, which is just another pointer with fences.
+It is tempting to bypass these current limitations by using unsafe features of the language (e.g., \texttt{Obj.magic}).
+
+Although these optimizations are performed with care and should not break anything for regular uses, memory safety is not guaranteed for illegal uses and the interaction with compiler optimizations is not clear.
+As a consequence, we propose two versions of each data structure: a safe version and an unsafe version.
+While most users should find the safe version efficient enough for their needs, daring users may prefer the unsafe version provided they encapsulate it correctly and verify their code somehow.
 
 % \section{Example of use}
 % It feels it would be nice to have a simple example here to show that it is easy to use the library.
@@ -81,9 +97,8 @@ There are other missing features in \OCaml~5, such as the inability to remove fe
 % TODO Possible question :  
 % - When it should not be used ?  
 %   - composability -> see Kcas
-%   - very speficic needs and performance
+%   - very specific needs and performance
 % - Is it ready ?
-
 
 \section{Tests}
 In multicore programming, it is essential to test not only the correctness of the data structures but also to verify sequential consistency and lock-freedom when expected. \Saturn has been thoroughly tested using mainly two different tools: \dscheck and \STM. 
