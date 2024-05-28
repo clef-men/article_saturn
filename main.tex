@@ -42,11 +42,16 @@ It is well tested, benchmarked and in part formally verified.
 
 \section{Motivation}
 
-Sharing data between multiple threads or cores is a well-known and challenging problem. A naive approach would be to take a sequential data structure and add locks to protect it. However, this is often not the best solution. Firstly, if performance is a concern, this approach is likely insufficient: no operation will run in parallel on such a data structure, and locks introduce significant contention. Secondly, it may not be a "safe" solution, as it can lead to safety and liveness issues such as deadlocks, starvation, and priority inversion.
+Sharing data between multiple threads or cores is a well-known problem.
+A naive approach is to take a sequential data structure and protect it with a lock.
+However, this is often not the best solution.
+First, if performance is a concern, this approach is likely to be inefficient as locks introduce significant contention.
+Second, it may not be a sound solution as it can lead to liveness issues such as deadlock, starvation and priority inversion.
 
-In contrast, more sophisticated approaches, like lock-free implementations, require careful design as they introduce their own set of challenging bugs, such as the ABA problem (largely mitigated in \OCaml~5), data races, and unexpected behaviors due to non-linearizability.
+In contrast, \emph{lockfree} implementations relying on fine-grained synchronisation rather than locks are typically faster and guaranty system-wide progress.
+Yet, they are also more complex and come with their own set of bugs: ABA problem (largely mitigated in garbage-collected languages), data races, unexpected behaviors due to non-linearizability.
 
-In this context, \Saturn aims to assist \OCaml~5 programmers by providing a collection of well-tested and benchmarked data structures designed to ensure the proper safety and liveness properties in parallel programming.
+In this context, \Saturn provides a collection of standard lockfree data structures saving \OCaml~5 programmers the trouble of designing their own.
 
 \section{Library design}
 
