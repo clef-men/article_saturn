@@ -48,10 +48,10 @@ However, this is often not the best solution.
 First, if performance is a concern, this approach is likely to be inefficient as locks introduce significant contention.
 Second, it may not be a sound solution as it can lead to liveness issues such as deadlock, starvation and priority inversion.
 
-In contrast, \emph{lockfree} implementations relying on fine-grained synchronisation rather than locks are typically faster and guaranty system-wide progress.
+In contrast, \emph{lock-free} implementations relying on fine-grained synchronisation rather than locks are typically faster and guaranty system-wide progress.
 Yet, they are also more complex and come with their own set of bugs: ABA problem (largely mitigated in garbage-collected languages), data races, unexpected behaviors due to non-linearizability.
 
-In this context, \Saturn provides a collection of standard lockfree data structures saving \OCaml~5 programmers the trouble of designing their own.
+In this context, \Saturn provides a collection of standard lock-free data structures saving \OCaml~5 programmers the trouble of designing their own.
 
 \section{Library design}
 
@@ -117,7 +117,7 @@ Additionally, \DSCheck can be used to verify that a program is lock-free, as it 
 
 \section{Formal verification}
 
-Lockfree algorithms are notoriously difficult to get right.
+Lock-free algorithms are notoriously difficult to get right.
 To provide stronger guarantees, we have verified part of \Saturn's data structures and aim at covering the entire library.
 Moreover, one important benefit is that we get formal specifications for verified data structures.
 
