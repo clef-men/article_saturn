@@ -71,9 +71,9 @@ For instance, we had to rework the Michael-Scott queue to avoid memory leak.
 
 % Safe/unsafe versions
 Regarding performance, \Saturn provides benchmarks for each data structure, and significant effort has been dedicated to optimizations.
-For instance, we work on preventing false sharing. False sharing occurs when several shared data are contained in a single cache line. 
-When different domains simultaneously access these data items, they are forced to synchronize, even if they are not modifying the same data.
-To avoid it, we need to ensure that shared data items are not in the same cache line, which essentially requires padding them.
+For instance, we worked on preventing false sharing. False sharing occurs when several shared data are contained in a single cache line. 
+When different domains simultaneously access these data, they are forced to synchronize, even if they are not modifying the same data.
+To avoid it, we need to ensure that shared data are not in the same cache line, which essentially requires padding them.
 Currently, in \OCaml~5 only atomic variables can be padded (using \texttt{Atomic.make\_contended}, available since \OCaml 5.2.0), but it is often useful to do more and \OCaml~5 is missing such a feature.
 
 % The single-consumer single-producer queue provides a good example of this issue: 
@@ -91,7 +91,7 @@ To explore optimizations that bypass these current limitations, we use unsafe fe
 % \section{Example of use}
 % It feels it would be nice to have a simple example here to show that it is easy to use the library.
 
-% TODO Possible question :  
+% Note Possible question :  
 % - When it should not be used ?  
 %   - composability -> see Kcas
 %   - very specific needs and performance
