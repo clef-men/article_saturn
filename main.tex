@@ -60,7 +60,7 @@ More precisely, it currently features:
 (A) numerous queues: a queue based on the well-known Michael-Scott queue~\cite{michael1996simple}, a single-producer single-consumer queue, a multiple-producer single-consumer queue and a bounded queue; 
 (B) a stack based on the Treiber stack~\cite{treiber1986systems};
 (C) a work-stealing deque;
-(D) a bounded bag;
+(D) a bag;
 (E) a hash table;
 (F) a skiplist.
 
@@ -71,21 +71,22 @@ For instance, we had to rework the Michael-Scott queue to avoid memory leak.
 
 % Safe/unsafe versions
 Regarding performance, \Saturn provides benchmarks for each data structure, and significant effort has been dedicated to optimizations.
-However, there is often a tension between improving efficiency and remaining within the safe fragment of \OCaml~5.
-In particular, \OCaml~5 currently lacks some important features to avoid false sharing.
-False sharing occurs when several shared data are contained in a single cache line.
+For instance, we work on preventing false sharing. False sharing occurs when several shared data are contained in a single cache line. 
 When different domains simultaneously access these data items, they are forced to synchronize, even if they are not modifying the same data.
-To prevent this, we need to ensure that shared data items are not in the same cache line, which essentially requires padding them.
-Currently, only atomic variables can be padded (using \texttt{Atomic.make\_contended}, available since \OCaml 5.2.0), but it is often useful to do more. 
+To avoid it, we need to ensure that shared data items are not in the same cache line, which essentially requires padding them.
+Currently, in \OCaml~5 only atomic variables can be padded (using \texttt{Atomic.make\_contended}, available since \OCaml 5.2.0), but it is often useful to do more and \OCaml~5 is missing such a feature.
 
-The single-consumer single-producer queue provides a good example of this issue: 
+% The single-consumer single-producer queue provides a good example of this issue: 
 
-\emph{Add code snippet to show the issue}.
+% \emph{Add code snippet to show the issue}.
 
 There are other missing features in \OCaml~5, such as the inability to remove fences on atomic accesses, even when they are redundant with the preceding and/or following atomic accesses.
-Additionally, there is the issue of extra indirection in arrays of atomics: each cell in such an array is a pointer to an atomic, which is itself another pointer with fences. Part of the work done in \Saturn is motivated by the need to highlight these limitations and to suggest possible improvements to the \OCaml~5 memory model and compiler.
+Additionally, there is the issue of extra indirection in arrays of atomics: each cell in such an array is a pointer to an atomic, which is itself another pointer with fences. This part of the work done in \Saturn is also motivated by the need to highlight these limitations and to suggest possible improvements to the \OCaml~5 memory model and compiler.
+
+% However, there is often a tension between improving efficiency and remaining within the safe fragment of \OCaml~5.
 
 To explore optimizations that bypass these current limitations, we use unsafe features of the language (e.g., \texttt{Obj.magic}). Although these optimizations are performed with care and should not break anything under regular use, we cannot provide the same level of guarantee as with the standard implementations. Consequently, some of \Saturn's data structures have two versions: a version using only the available features of \OCaml and another utilizing the \texttt{Obj} module to achieve optimizations that are currently unattainable otherwise. While most users should find the regular version efficient enough for their needs, more adventurous users may prefer the optimized version, provided they encapsulate it correctly and thoroughly verify their code.
+
 
 % \section{Example of use}
 % It feels it would be nice to have a simple example here to show that it is easy to use the library.
@@ -153,15 +154,14 @@ As a final note, we emphasize that our verification assumes a sequentially consi
 Nevertheless, \OCaml~5's relaxed memory model has been formalized~\cite{DBLP:journals/pacmpl/MevelJP20} in \Iris.
 It should be possible and is future work to adapt our specifications and proofs to support it.
 
+% \section{Futur work}
+% By providing extensively tested, formally verified, and benchmarked parallelism-safe implementations, \Saturn aims to help \OCaml~5 users avoid the pitfalls and intricacies of implementing their own concurrent data structures. The library is available on \opam and is under active development. We plan to add new data structures (such as a lock-free priority queue, a bounded stack, and a lock-free set, among others) and continue improving the existing ones. Additionally, we are working on formally verifying even more data structures using \Iris. 
+
 \section{Talk proposal}
 
 In our talk, we will introduce \Saturn, including the main data structures and design guidelines.
 We will also discuss ongoing work on verifying the library using the \Iris concurrent separation logic.
 
-%\section{Conclusion}
-% By providing extensively tested, formally verified, and benchmarked parallelism-safe implementations, \Saturn aims to help \OCaml~5 users avoid the pitfalls and intricacies of implementing their own concurrent data structures. The library is available on \opam and is under active development. We plan to add new data structures (such as a lock-free priority queue, a bounded stack, and a lock-free set, among others) and continue improving the existing ones. Additionally, we are working on formally verifying even more data structures using \Iris. 
-
-% (TODO A bit more details here ?)
 
 \printbibliography
 
