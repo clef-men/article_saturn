@@ -86,7 +86,6 @@ Regarding performance, we are working on providing benchmarks for each \Saturn's
 (A) preventing false sharing\footnote[1]{False sharing occurs when different domains access different data items contained in the same cache line, forcing unnecessary synchronization. To prevent this, these data must be padded to ensure they are not in the same cache line.},
 (B) adding fenceless atomic reads when possible, which improves performance on ARM processors, and
 (C) avoiding the extra indirection in arrays of atomics to reduce memory consumption.
-
 The feedback we produced while optimizing \Saturn has highlighted some missing features in \OCaml~5 and led to improvements in upstream \OCaml (\href{https://github.com/ocaml/ocaml/pull/12212}{padded atomics}, \href{https://github.com/ocaml/ocaml/pull/12715}{CSE bug fixed}).
 
 % Standard and optimized versions
@@ -119,7 +118,7 @@ As we are still in the experimental phase, we provide rough preliminary numbers 
 (1) the \Stdlib queue (with one domain only),
 (2) the \Stdlib queue protected with a mutex,
 (3) the lock-free Michael-Scott queue from \Saturn,
-(4) an Michael-Scott two-stack-based queue (currently in this \href{https://github.com/ocaml-multicore/saturn/pull/112}{PR} in \Saturn).
+(4) a Michael-Scott two-stack-based queue (currently in this \href{https://github.com/ocaml-multicore/saturn/pull/112}{PR} in \Saturn).
 The stack implementations benchmarked are
 (1) the \Stdlib stack (with one domain only),
 (2) the \Stdlib stack protected with a mutex,
@@ -143,11 +142,10 @@ The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P
 \end{table}
 
 There are many insights to be drawn from these results, but we will highlight a few key points. Firstly, for sequential programs, the \Stdlib queue and stack are the fastest implementations as the concurrent implementations add significant overhead. However, the \Saturn implementations largely outperform the \Stdlib ones protected with a single lock, even under low contention. Finally, the concurrent stack implemented with an atomic list performs comparably to the Treiber stack\footnote[2]{The Treiber stack is essentially an atomic list.}. 
-There is still a benefit to using \Saturn data structures in this case; even this basic implementation is optimized through:
+There is still a benefit to using \Saturn data structures in this case: even this basic implementation is optimized through
 (a) the use of \texttt{make\_contended} to prevent false sharing, and
 (b) a backoff mechanism to reduce contention.
-Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention, which is significantly lower than the Treiber stack's performance. In the future, we may further optimize the Treiber stack to make it explicitly leak-safe and support additional minor features.
-
+Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention, which is significantly lower than the Treiber stack's performance. 
 
 
 \begin{table}[htbp]
@@ -190,7 +188,7 @@ Without these seemingly small optimizations, the atomic list implementation has 
   \centering
   \begin{tabular}{|l|l|l|l|}
     \hline
-    \textbf{Configuration}              & \textbf{Stack Implementation} & \textbf{Intel i7-1270P} & \textbf{Apple M3 Max} \\ \hline
+    \textbf{Configuration}              & \textbf{Stack Implementation} & \textbf{Intel i7-1270P} & \textbf{Apple M3} \\ \hline
     \multirow{4}{*}{1 adder, 1 taker}   & Stdlib stack with mutex       & \worst{2.7 M/s}         & \worst{18 M/s}        \\ \cline{2-4}
                                         & Atomic list                   & 66 M/s                  & \best{140 M/s}        \\ \cline{2-4}
                                         & Saturn Treiber stack          & \best{70 M/s}           & 128 M/s               \\ \hline
@@ -211,7 +209,7 @@ Without these seemingly small optimizations, the atomic list implementation has 
 \section{Tests}
 
 In multicore programming, it is essential to test not only the safety of the data structures but also to verify linearizability and lock-freedom when expected.
-To achieve this, \Saturn has been thoroughly tested using two primary different tools: \DSCheck and \STM.
+To achieve this, \Saturn has been thoroughly tested using two primary tools: \DSCheck and \STM.
 
 \STM is used not only for unit testing but also for linearizability.
 It automatically generates random full programs using the provided API---in the case of \Saturn, a data structure.
@@ -221,7 +219,7 @@ Simultaneously, \STM verifies linearizability by ensuring that all intermediate 
 \DSCheck is a model checker based on the DPOR\footnote[3]{DPOR stands for Dynamic Partial-Order Reduction} algorithm~\cite{dpor05}.
 It is designed to compute all possible interleavings of a given program and verify that each one returns the expected result.
 This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings.
-Additionally, \DSCheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present. This is a bit more cumbersome to use than \STM (see the \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/treiber_stack_dscheck.ml}{DSCheck tests for the Treiber stack}) but it is still a powerful tool. The implementation has been optimized\footnote[4]{See the PRs about \href{https://github.com/ocaml-multicore/dscheck/pull/18}{source sets} and \href{https://github.com/ocaml-multicore/dscheck/pull/22}{granular dependency relation}.} to make the tests quick enough to be used even on the more complex data structures of \Saturn (see \href{https://github.com/ocaml-multicore/saturn/blob/main/test/skiplist/stm_skiplist.ml}{the skiplist DSCheck tests}).
+Additionally, \DSCheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present. This is a bit more cumbersome to use than \STM (see the \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/treiber_stack_dscheck.ml}{DSCheck tests for the Treiber stack}) but it is still a powerful tool. \DSCheck implementation has been optimized\footnote[4]{See the PRs about \href{https://github.com/ocaml-multicore/dscheck/pull/18}{source sets} and \href{https://github.com/ocaml-multicore/dscheck/pull/22}{granular dependency relation}.} to make the tests quick enough to be used even on the more complex data structures of \Saturn (see \href{https://github.com/ocaml-multicore/saturn/blob/main/test/skiplist/stm_skiplist.ml}{the skiplist DSCheck tests}).
 
 \section{Formal verification}
 
