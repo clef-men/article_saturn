@@ -102,17 +102,6 @@ To explore some of these optimizations, we use unsafe features of the language (
 
 % 
 \section{Benchmarks}\label{sec:benchmarks}
-% As we are still in the experimental phase, we only provide some rough preliminary numbers to give an idea of the library performance. The following table shows the throughput of three implementations of a single-consumer single-producer queue in million messages per second. The \href{https://github.com/ocaml-multicore/saturn/blob/main/src_lockfree/spsc_queue.ml}{first implementation} is provided by \Saturn under the name \texttt{Single\_cons\_single\_prod\_queue}. The second one is an optimized version that uses unsafe features of \OCaml. The \href{https://github.com/ocaml-multicore/saturn/pull/133}{last one} is written in \Cpp and provides a good upper limit. The tests were run on an Intel i7-1270P and an Arm Cortex M3.
-
-% \hspace{0.5cm}
-
-% \begin{tabular}{r r r}
-%   \textbf{Throughput (million message/s)} & \textbf{Intel} & \textbf{Arm} \\
-%   \hline
-%   SPSC queue                              & 60 M/s         & 100 M/s      \\
-%   Optimized SPSC queue                    & 100 M/s        & 250 M/s      \\
-%   \Cpp SPSC queue                         & 400 M/s        & 500 M/s      \\
-% \end{tabular}
 
 As we are still in the experimental phase, we provide rough preliminary numbers to give an idea of the library performance. The following tables show the throughput of various queues and stacks implementations. The queue implementations benchmarked are:
 (1) the \Stdlib queue (with one domain only),
@@ -127,84 +116,85 @@ The stack implementations benchmarked are
 The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P+4E cores) using OCaml 5.2.0 (see this \href{https://github.com/lyrm/saturn_benchmarks}{repository} if you want to run your own benchmarks).
 
 
+
 \begin{table}[htbp]
-  \centering
-  \begin{tabular}{|l|l|l|}
-    \hline
-    \textbf{Queue Implementation} & \textbf{Intel i7-1270P} & \textbf{Apple M3} \\ \hline
-    Stdlib queue                  & \best{61 M/s}           & \best{64 M/s}     \\ \hline
-    Stdlib queue with mutex       & 24 M/s                  & \worst{19 M/s}    \\ \hline
-    Saturn Michael-Scott queue    & \worst{22 M/s}          & 32 M/s            \\ \hline
-    Two\_stack queue              & 37 M/s                  & 56 M/s            \\ \hline
-  \end{tabular}
-  \caption{Message over time (million messages per second) for several queue implementations on a single domain}
-  \label{tab:queue-benchmarks-one-domain}
+  \begin{minipage}[t]{0.45\textwidth}
+    \centering
+    \begin{tabular}{|l|l|l|}
+      \hline
+      \textbf{Queue} & \textbf{Intel} & \textbf{Apple} \\ \hline
+      Stdlib         & \best{61 M/s}  & \best{64 M/s}  \\ \hline
+      Stdlib + mutex & 24 M/s         & \worst{19 M/s} \\ \hline
+      Michael-Scott  & \worst{22 M/s} & 32 M/s         \\ \hline
+      Two\_stack     & 37 M/s         & 56 M/s         \\ \hline
+    \end{tabular}
+  \end{minipage}
+  \hspace{0.05\textwidth}
+  \begin{minipage}[t]{0.45\textwidth}
+    \centering
+    \begin{tabular}{|l|l|l|}
+      \hline
+      \textbf{Stack} & \textbf{Intel} & \textbf{Apple} \\ \hline
+      Stdlib         & \best{66 M/s}  & \best{72 M/s}  \\ \hline
+      Stdlib + mutex & \worst{24 M/s} & \worst{24 M/s} \\ \hline
+      Atomic list    & 52 M/s         & 66 M/s         \\ \hline
+      Saturn Treiber & 47 M/s         & 67 M/s         \\ \hline
+    \end{tabular}
+  \end{minipage}
+  \caption{Single domain benchmarks}
 \end{table}
 
-There are many insights to be drawn from these results, but we will highlight a few key points. Firstly, for sequential programs, the \Stdlib queue and stack are the fastest implementations as the concurrent implementations add significant overhead. However, the \Saturn implementations largely outperform the \Stdlib ones protected with a single lock, even under low contention. Finally, the concurrent stack implemented with an atomic list performs comparably to the Treiber stack\footnote[2]{The Treiber stack is essentially an atomic list.}. 
+
+There are many insights to be drawn from these results, but we will highlight a few key points. Firstly, for sequential programs, the \Stdlib queue and stack are the fastest implementations as the concurrent implementations add significant overhead. However, the \Saturn implementations largely outperform the \Stdlib ones protected with a single lock, even under low contention. Finally, the concurrent stack implemented with an atomic list performs comparably to the Treiber stack\footnote[2]{The Treiber stack is essentially an atomic list.}.
 There is still a benefit to using \Saturn data structures in this case: even this basic implementation is optimized through
 (a) the use of \texttt{make\_contended} to prevent false sharing, and
 (b) a backoff mechanism to reduce contention.
-Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention, which is significantly lower than the Treiber stack's performance. 
+Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention, which is significantly lower than the Treiber stack's performance.
 
 
+
+\newcommand*{\rowtitle}[1]{\multirow{3}{0.11\linewidth}{#1}}
 \begin{table}[htbp]
   \centering
-  \begin{tabular}{|l|l|l|}
+  \begin{tabular}{|r|r|r|r||r|r|r|}
     \hline
-    \textbf{Stack Implementation} & \textbf{Intel i7-1270P} & \textbf{Apple M3} \\ \hline
-    Stdlib stack                  & \best{66 M/s}           & \best{72 M/s}     \\ \hline
-    Stdlib stack with mutex       & \worst{24 M/s}          & \worst{24 M/s}    \\ \hline
-    Atomic list                   & 52 M/s                  & 66 M/s            \\ \hline
-    Saturn Treiber stack          & 47 M/s                  & 67 M/s            \\ \hline
+    \textbf{Config}               & \textbf{Queue} & \textbf{Intel}  & \textbf{Apple}  & \textbf{Stack} & \textbf{Intel}  & \textbf{Apple}  \\ \hline
+    \rowtitle{1 adder, 1 taker}   & Stdlib + mutex   & \worst{6.1} & \worst{14}  & Stdlib + mutex   & \worst{2.7} & \worst{18}  \\ \cline{2-4}
+                                  & Michael-Scott  & 19          & 45          & Atomic list    & 66          & \best{140}  \\ \cline{2-4}
+                                  & Two-stack      & \best{40}   & \best{110}  & Treiber        & \best{70}   & 128         \\ \hline
+    \rowtitle{1 adder, 2 takers}  & Stdlib + mutex   & \worst{3.1} & \worst{3.2} & Stdlib + mutex   & \worst{3.1} & \worst{4.0} \\ \cline{2-4}
+                                  & Michael-Scott  & 18          & 16          & Atomic list    & \best{49}   & 113         \\ \cline{2-4}
+                                  & Two-stack      & \best{36}   & \best{102}  & Treiber        & 46          & \best{104}  \\ \hline
+    \rowtitle{2 adders, 1 taker}  & Stdlib + mutex   & \worst{5.8} & \worst{5.8} & Stdlib + mutex   & \worst{6.5} & \worst{7.7} \\ \cline{2-4}
+                                  & Michael-Scott  & 9.9         & 24          & Atomic list    & 52          & \best{120}  \\ \cline{2-4}
+                                  & Two-stack      & \best{17}   & \best{89}   & Treiber        & \best{60}   & 114         \\ \hline
+    \rowtitle{2 adders, 2 takers} & Stdlib + mutex   & \worst{3.6} & \worst{6.0} & Stdlib + mutex   & \worst{3.6} & \worst{7.7} \\ \cline{2-4}
+                                  & Michael-Scott  & 8.2         & 29          & Atomic list    & 41          & \best{107}  \\ \cline{2-4}
+                                  & Two-stack      & \best{17}   & \best{97}   & Treiber        & \best{43}   & 99          \\ \hline
   \end{tabular}
-  \caption{Message over time (million messages per second) for several stack implementations on a single domain}
-  \label{tab:stack-benchmarks-one-domain}
+  \caption{Benchmarks with multiple domains in parallel (in millions of messages per second)}
 \end{table}
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{|l|l|l|l|}
-    \hline
-    \textbf{Configuration}              & \textbf{Queue Implementation} & \textbf{Intel i7-1270P} & \textbf{Apple M3} \\ \hline
-    \multirow{3}{*}{1 adder, 1 taker}   & Stdlib queue with mutex       & \worst{6.1 M/s}         & \worst{14 M/s}    \\ \cline{2-4}
-                                        & Saturn Michael-Scott queue    & 19 M/s                  & 45 M/s            \\ \cline{2-4}
-                                        & Two\_stack queue              & \best{40 M/s}           & \best{110 M/s}    \\ \hline
-    \multirow{3}{*}{1 adder, 2 takers}  & Stdlib queue with mutex       & \worst{3.1 M/s}         & \worst{3.2 M/s}   \\ \cline{2-4}
-                                        & Saturn Michael-Scott queue    & 18 M/s                  & 16 M/s            \\ \cline{2-4}
-                                        & Two\_stack queue              & \best{36 M/s}           & \best{102 M/s}    \\ \hline
-    \multirow{3}{*}{2 adders, 1 taker}  & Stdlib queue with mutex       & \worst{5.8 M/s}         & \worst{5.8 M/s}   \\ \cline{2-4}
-                                        & Saturn Michael-Scott queue    & 9.9 M/s                 & 24 M/s            \\ \cline{2-4}
-                                        & Two\_stack queue              & \best{17 M/s}           & \best{89 M/s}     \\ \hline
-    \multirow{3}{*}{2 adders, 2 takers} & Stdlib queue with mutex       & \worst{3.6 M/s}         & \worst{6.0 M/s}   \\ \cline{2-4}
-                                        & Saturn Michael-Scott queue    & 8.2 M/s                 & 29 M/s            \\ \cline{2-4}
-                                        & Two\_stack queue              & \best{17 M/s}           & \best{97 M/s}     \\ \hline
-  \end{tabular}
-  \caption{Message over time (million messages per second) for several stack implementations on a multiple domain running in parallel}
-  \label{tab:queue-benchmarks-parallel}
-\end{table}
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{|l|l|l|l|}
-    \hline
-    \textbf{Configuration}              & \textbf{Stack Implementation} & \textbf{Intel i7-1270P} & \textbf{Apple M3} \\ \hline
-    \multirow{4}{*}{1 adder, 1 taker}   & Stdlib stack with mutex       & \worst{2.7 M/s}         & \worst{18 M/s}        \\ \cline{2-4}
-                                        & Atomic list                   & 66 M/s                  & \best{140 M/s}        \\ \cline{2-4}
-                                        & Saturn Treiber stack          & \best{70 M/s}           & 128 M/s               \\ \hline
-    \multirow{4}{*}{1 adder, 2 takers}  & Stdlib stack with mutex       & \worst{3.1 M/s}         & \worst{4.0 M/s}       \\ \cline{2-4}
-                                        & Atomic list                   & \best{49 M/s}           & 113 M/s               \\ \cline{2-4}
-                                        & Saturn Treiber stack          & 46 M/s                  & \best{104 M/s}        \\ \hline
-    \multirow{4}{*}{2 adders, 1 taker}  & Stdlib stack with mutex       & \worst{6.5 M/s}         & \worst{7.7 M/s}       \\ \cline{2-4}
-                                        & Atomic list                   & 52 M/s                  & \best{120 M/s}        \\ \cline{2-4}
-                                        & Saturn Treiber stack          & \best{60 M/s}           & 114 M/s               \\ \hline
-    \multirow{4}{*}{2 adders, 2 takers} & Stdlib stack with mutex       & \worst{3.6 M/s}         & \worst{7.7 M/s}       \\ \cline{2-4}
-                                        & Atomic list                   & 41 M/s                  & \best{107 M/s}        \\ \cline{2-4}
-                                        & Saturn Treiber stack          & \best{43 M/s}           & 99 M/s                \\ \hline
-  \end{tabular}
-  \caption{Messages over time (million messages per second) for several stack implementations running in parallel}
-  \label{tab:stack-benchmarks-parallel}
-\end{table}
+% \begin{table}[htbp]
+%   \centering
+%   \begin{tabular}{|l|l|l|l|}
+%     \hline
+%     \textbf{Configuration}              & \textbf{Stack} & \textbf{Intel}  & \textbf{Apple}  \\ \hline
+%     \multirow{4}{*}{1 adder, 1 taker}   & Stdlib + mutex & \worst{2.7 M/s} & \worst{18 M/s}  \\ \cline{2-4}
+%                                         & Atomic list    & 66 M/s          & \best{140 M/s}  \\ \cline{2-4}
+%                                         & Treiber        & \best{70 M/s}   & 128 M/s         \\ \hline
+%     \multirow{4}{*}{1 adder, 2 takers}  & Stdlib + mutex & \worst{3.1 M/s} & \worst{4.0 M/s} \\ \cline{2-4}
+%                                         & Atomic list    & \best{49 M/s}   & 113 M/s         \\ \cline{2-4}
+%                                         & Treiber        & 46 M/s          & \best{104 M/s}  \\ \hline
+%     \multirow{4}{*}{2 adders, 1 taker}  & Stdlib + mutex & \worst{6.5 M/s} & \worst{7.7 M/s} \\ \cline{2-4}
+%                                         & Atomic list    & 52 M/s          & \best{120 M/s}  \\ \cline{2-4}
+%                                         & Treiber        & \best{60 M/s}   & 114 M/s         \\ \hline
+%     \multirow{4}{*}{2 adders, 2 takers} & Stdlib + mutex & \worst{3.6 M/s} & \worst{7.7 M/s} \\ \cline{2-4}
+%                                         & Atomic list    & 41 M/s          & \best{107 M/s}  \\ \cline{2-4}
+%                                         & Treiber        & \best{43 M/s}   & 99 M/s          \\ \hline
+%   \end{tabular}
+% \end{table}
 
 \section{Tests}
 
