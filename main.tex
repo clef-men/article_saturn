@@ -120,19 +120,19 @@ The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P
 \begin{table}[htbp]
   \begin{minipage}[t]{0.45\textwidth}
     \centering
-    \begin{tabular}{|l|l|l|}
+    \begin{tabular}{|r|r|r|}
       \hline
       \textbf{Queue} & \textbf{Intel} & \textbf{Apple} \\ \hline
       Stdlib         & \best{61 M/s}  & \best{64 M/s}  \\ \hline
       Stdlib + mutex & 24 M/s         & \worst{19 M/s} \\ \hline
       Michael-Scott  & \worst{22 M/s} & 32 M/s         \\ \hline
-      Two\_stack     & 37 M/s         & 56 M/s         \\ \hline
+      Two-stack     & 37 M/s         & 56 M/s         \\ \hline
     \end{tabular}
   \end{minipage}
   \hspace{0.05\textwidth}
   \begin{minipage}[t]{0.45\textwidth}
     \centering
-    \begin{tabular}{|l|l|l|}
+    \begin{tabular}{|r|r|r|}
       \hline
       \textbf{Stack} & \textbf{Intel} & \textbf{Apple} \\ \hline
       Stdlib         & \best{66 M/s}  & \best{72 M/s}  \\ \hline
