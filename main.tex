@@ -149,7 +149,7 @@ There are many insights to be drawn from these results, but we will highlight a 
 There is still a benefit to using \Saturn data structures in this case: even this basic implementation is optimized through
 (a) the use of \texttt{make\_contended} to prevent false sharing, and
 (b) a backoff mechanism to reduce contention.
-Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention, which is significantly lower than the Treiber stack's performance.
+Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention (on the Intel machine), which is significantly lower than the Treiber stack's performance.
 
 
 
@@ -175,26 +175,6 @@ Without these seemingly small optimizations, the atomic list implementation has 
   \caption{Benchmarks with multiple domains in parallel (in millions of messages per second)}
 \end{table}
 
-
-% \begin{table}[htbp]
-%   \centering
-%   \begin{tabular}{|l|l|l|l|}
-%     \hline
-%     \textbf{Configuration}              & \textbf{Stack} & \textbf{Intel}  & \textbf{Apple}  \\ \hline
-%     \multirow{4}{*}{1 adder, 1 taker}   & Stdlib + mutex & \worst{2.7 M/s} & \worst{18 M/s}  \\ \cline{2-4}
-%                                         & Atomic list    & 66 M/s          & \best{140 M/s}  \\ \cline{2-4}
-%                                         & Treiber        & \best{70 M/s}   & 128 M/s         \\ \hline
-%     \multirow{4}{*}{1 adder, 2 takers}  & Stdlib + mutex & \worst{3.1 M/s} & \worst{4.0 M/s} \\ \cline{2-4}
-%                                         & Atomic list    & \best{49 M/s}   & 113 M/s         \\ \cline{2-4}
-%                                         & Treiber        & 46 M/s          & \best{104 M/s}  \\ \hline
-%     \multirow{4}{*}{2 adders, 1 taker}  & Stdlib + mutex & \worst{6.5 M/s} & \worst{7.7 M/s} \\ \cline{2-4}
-%                                         & Atomic list    & 52 M/s          & \best{120 M/s}  \\ \cline{2-4}
-%                                         & Treiber        & \best{60 M/s}   & 114 M/s         \\ \hline
-%     \multirow{4}{*}{2 adders, 2 takers} & Stdlib + mutex & \worst{3.6 M/s} & \worst{7.7 M/s} \\ \cline{2-4}
-%                                         & Atomic list    & 41 M/s          & \best{107 M/s}  \\ \cline{2-4}
-%                                         & Treiber        & \best{43 M/s}   & 99 M/s          \\ \hline
-%   \end{tabular}
-% \end{table}
 
 \section{Tests}
 
