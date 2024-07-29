@@ -31,6 +31,7 @@
 
 %------------------------------------------------------------
 
+
 \title{\Saturn: a library of verified concurrent data structures for \OCaml~5}
 \date{\today}
 \author{
@@ -39,7 +40,6 @@
   Carine Morel (Tarides)
 }
 
-%------------------------------------------------------------
 %------------------------------------------------------------
 
 \begin{document}
@@ -53,17 +53,11 @@ We present \Saturn, a new \OCaml~5 library available on \opam.
 It is well tested, benchmarked and in part formally verified.
 
 \section{Motivation}
+Sharing data between multiple threads or cores is a well-known problem. A naive approach is to take a sequential data structure and protect it with a lock. However, this approach is often inefficient in terms of performance, as locks introduce significant contention. Additionally, it may not be a sound solution as it can lead to liveness issues such as deadlock, starvation, and priority inversion.
 
-Sharing data between multiple threads or cores is a well-known problem.
-A naive approach is to take a sequential data structure and protect it with a lock.
-However, this is often not the best solution.
-First, if performance is a concern, this approach is likely to be inefficient as locks introduce significant contention.
-Second, it may not be a sound solution as it can lead to liveness issues such as deadlock, starvation and priority inversion.
+In contrast, \emph{lock-free} implementations, which rely on fine-grained synchronization instead of locks, are typically faster and guarantee system-wide progress. However, they are also more complex and come with their own set of bugs, such as the ABA problem (largely mitigated in garbage-collected languages), data races, and unexpected behaviors due to non-linearizability.
 
-In contrast, \emph{lock-free} implementations relying on fine-grained synchronisation rather than locks are typically faster and guaranty system-wide progress.
-Yet, they are also more complex and come with their own set of bugs: ABA problem (largely mitigated in garbage-collected languages), data races, unexpected behaviors due to non-linearizability.
-
-In this context, \Saturn provides a collection of standard lock-free data structures saving \OCaml~5 programmers the trouble of designing their own.
+In this context, \Saturn provides a collection of standard lock-free data structures, saving \OCaml~5 programmers the trouble of designing their own. Currently, there is no similar project available for \OCaml~5 in opam. Most \OCaml~5 developers currently choose to write their own data structures, which is error-prone and time-consuming.
 
 \section{Library design}
 
@@ -106,7 +100,7 @@ To explore some of these optimizations, we use unsafe features of the language (
 As we are still in the experimental phase, we provide rough preliminary numbers to give an idea of the library performance. The following tables show the throughput of various queues and stacks implementations. The queue implementations benchmarked are:
 (1) the \Stdlib queue (with one domain only),
 (2) the \Stdlib queue protected with a mutex,
-(3) the lock-free Michael-Scott queue from \Saturn,
+(3) the lock-free Michael-Scott queue from \Saturn (safe version),
 (4) a Michael-Scott two-stack-based queue (currently in this \href{https://github.com/ocaml-multicore/saturn/pull/112}{PR} in \Saturn).
 The stack implementations benchmarked are
 (1) the \Stdlib stack (with one domain only),
@@ -114,7 +108,6 @@ The stack implementations benchmarked are
 (3) a concurrent stack implemented with an atomic list,
 (4) a lock-free Treiber stack from \Saturn.
 The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P+4E cores) using OCaml 5.2.0 (see this \href{https://github.com/lyrm/saturn_benchmarks}{repository} if you want to run your own benchmarks).
-
 
 
 \begin{table}[htbp]
@@ -126,7 +119,7 @@ The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P
       Stdlib         & \best{61 M/s}  & \best{64 M/s}  \\ \hline
       Stdlib + mutex & 24 M/s         & \worst{19 M/s} \\ \hline
       Michael-Scott  & \worst{22 M/s} & 32 M/s         \\ \hline
-      Two-stack     & 37 M/s         & 56 M/s         \\ \hline
+      Two-stack      & 37 M/s         & 56 M/s         \\ \hline
     \end{tabular}
   \end{minipage}
   \hspace{0.05\textwidth}
@@ -144,33 +137,29 @@ The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P
   \caption{Single domain benchmarks}
 \end{table}
 
-
-There are many insights to be drawn from these results, but we will highlight a few key points. Firstly, for sequential programs, the \Stdlib queue and stack are the fastest implementations as the concurrent implementations add significant overhead. However, the \Saturn implementations largely outperform the \Stdlib ones protected with a single lock, even under low contention. Finally, the concurrent stack implemented with an atomic list performs comparably to the Treiber stack\footnote[2]{The Treiber stack is essentially an atomic list.}.
-There is still a benefit to using \Saturn data structures in this case: even this basic implementation is optimized through
+There are several insights to be drawn from these results, but we will highlight a few key points. Firstly, for sequential programs, the \Stdlib queue and stack are the fastest implementations as the concurrent implementations add significant overhead. However, the \Saturn implementations consistently outperform the \Stdlib ones protected with a single lock, even under low contention. Finally, the concurrent stack implemented with an atomic list performs comparably to the Treiber stack\footnote[2]{The Treiber stack is essentially a well-optimized atomic list.} from Saturn. In cases where a simple enough implementation exists, one might wonder why to use Saturn data structures instead of writing it oneself. However, even the atomic-list-based stack is optimized through
 (a) the use of \texttt{make\_contended} to prevent false sharing, and
 (b) a backoff mechanism to reduce contention.
-Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention (on the Intel machine), which is significantly lower than the Treiber stack's performance.
-
-
+Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention (on the Intel machine), which is significantly lower than the Treiber stack's performance. In addition, the \Saturn library provides thorough testing and could provide even more optimized implementations in the future.
 
 \newcommand*{\rowtitle}[1]{\multirow{3}{0.11\linewidth}{#1}}
 \begin{table}[htbp]
   \centering
   \begin{tabular}{|r|r|r|r||r|r|r|}
     \hline
-    \textbf{Config}               & \textbf{Queue} & \textbf{Intel}  & \textbf{Apple}  & \textbf{Stack} & \textbf{Intel}  & \textbf{Apple}  \\ \hline
-    \rowtitle{1 adder, 1 taker}   & Stdlib + mutex   & \worst{6.1} & \worst{14}  & Stdlib + mutex   & \worst{2.7} & \worst{18}  \\ \cline{2-4}
-                                  & Michael-Scott  & 19          & 45          & Atomic list    & 66          & \best{140}  \\ \cline{2-4}
-                                  & Two-stack      & \best{40}   & \best{110}  & Treiber        & \best{70}   & 128         \\ \hline
-    \rowtitle{1 adder, 2 takers}  & Stdlib + mutex   & \worst{3.1} & \worst{3.2} & Stdlib + mutex   & \worst{3.1} & \worst{4.0} \\ \cline{2-4}
-                                  & Michael-Scott  & 18          & 16          & Atomic list    & \best{49}   & 113         \\ \cline{2-4}
-                                  & Two-stack      & \best{36}   & \best{102}  & Treiber        & 46          & \best{104}  \\ \hline
-    \rowtitle{2 adders, 1 taker}  & Stdlib + mutex   & \worst{5.8} & \worst{5.8} & Stdlib + mutex   & \worst{6.5} & \worst{7.7} \\ \cline{2-4}
-                                  & Michael-Scott  & 9.9         & 24          & Atomic list    & 52          & \best{120}  \\ \cline{2-4}
-                                  & Two-stack      & \best{17}   & \best{89}   & Treiber        & \best{60}   & 114         \\ \hline
-    \rowtitle{2 adders, 2 takers} & Stdlib + mutex   & \worst{3.6} & \worst{6.0} & Stdlib + mutex   & \worst{3.6} & \worst{7.7} \\ \cline{2-4}
-                                  & Michael-Scott  & 8.2         & 29          & Atomic list    & 41          & \best{107}  \\ \cline{2-4}
-                                  & Two-stack      & \best{17}   & \best{97}   & Treiber        & \best{43}   & 99          \\ \hline
+    \textbf{Config}               & \textbf{Queue} & \textbf{Intel} & \textbf{Apple} & \textbf{Stack} & \textbf{Intel} & \textbf{Apple} \\ \hline
+    \rowtitle{1 adder, 1 taker}   & Stdlib + mutex & \worst{6.1}    & \worst{14}     & Stdlib + mutex & \worst{2.7}    & \worst{18}     \\ \cline{2-4}
+                                  & Michael-Scott  & 19             & 45             & Atomic list    & 66             & \best{140}     \\ \cline{2-4}
+                                  & Two-stack      & \best{40}      & \best{110}     & Treiber        & \best{70}      & 128            \\ \hline
+    \rowtitle{1 adder, 2 takers}  & Stdlib + mutex & \worst{3.1}    & \worst{3.2}    & Stdlib + mutex & \worst{3.1}    & \worst{4.0}    \\ \cline{2-4}
+                                  & Michael-Scott  & 18             & 16             & Atomic list    & \best{49}      & 113            \\ \cline{2-4}
+                                  & Two-stack      & \best{36}      & \best{102}     & Treiber        & 46             & \best{104}     \\ \hline
+    \rowtitle{2 adders, 1 taker}  & Stdlib + mutex & \worst{5.8}    & \worst{5.8}    & Stdlib + mutex & \worst{6.5}    & \worst{7.7}    \\ \cline{2-4}
+                                  & Michael-Scott  & 9.9            & 24             & Atomic list    & 52             & \best{120}     \\ \cline{2-4}
+                                  & Two-stack      & \best{17}      & \best{89}      & Treiber        & \best{60}      & 114            \\ \hline
+    \rowtitle{2 adders, 2 takers} & Stdlib + mutex & \worst{3.6}    & \worst{6.0}    & Stdlib + mutex & \worst{3.6}    & \worst{7.7}    \\ \cline{2-4}
+                                  & Michael-Scott  & 8.2            & 29             & Atomic list    & 41             & \best{107}     \\ \cline{2-4}
+                                  & Two-stack      & \best{17}      & \best{97}      & Treiber        & \best{43}      & 99             \\ \hline
   \end{tabular}
   \caption{Benchmarks with multiple domains in parallel (in millions of messages per second)}
 \end{table}
@@ -187,7 +176,7 @@ These programs are executed in parallel with two domains and all results are che
 Simultaneously, \STM verifies linearizability by ensuring that all intermediate states can be explained by a sequential execution of the calls. The STM \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/stm_treiber_stack.ml}{test for the Treiber stack} are a good example of how simple this is to write.
 
 \DSCheck is a model checker based on the DPOR\footnote[3]{DPOR stands for Dynamic Partial-Order Reduction} algorithm~\cite{dpor05}.
-It is designed to compute all possible interleavings of a given program and verify that each one returns the expected result.
+It is designed to compute all possible interleavings between multiple domains and verify that each one returns the expected result.
 This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings.
 Additionally, \DSCheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present. This is a bit more cumbersome to use than \STM (see the \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/treiber_stack_dscheck.ml}{DSCheck tests for the Treiber stack}) but it is still a powerful tool. \DSCheck implementation has been optimized\footnote[4]{See the PRs about \href{https://github.com/ocaml-multicore/dscheck/pull/18}{source sets} and \href{https://github.com/ocaml-multicore/dscheck/pull/22}{granular dependency relation}.} to make the tests quick enough to be used even on the more complex data structures of \Saturn (see \href{https://github.com/ocaml-multicore/saturn/blob/main/test/skiplist/stm_skiplist.ml}{the skiplist DSCheck tests}).
 
@@ -233,13 +222,10 @@ As a final note, we emphasize that our verification assumes a sequentially consi
 Nevertheless, \OCaml~5's relaxed memory model has been formalized~\cite{DBLP:journals/pacmpl/MevelJP20} in \Iris.
 It should be possible and is future work to adapt our specifications and proofs to support it.
 
-% \section{Futur work}
-% By providing extensively tested, formally verified, and benchmarked concurrent implementations, \Saturn aims to help \OCaml~5 users avoid the pitfalls and intricacies of implementing their own concurrent data structures. The library is available on \opam and is under active development. We plan to add new data structures (such as a lock-free priority queue, a bounded stack, and a lock-free set, among others) and continue improving the existing ones. Additionally, we are working on formally verifying even more data structures using \Iris. 
 
-% \section{Talk proposal}
+\section{Acknowledgments}
 
-% In our talk, we will introduce \Saturn, including the main data structures and design guidelines.
-% We will also discuss ongoing work on verifying the library using the \Iris concurrent separation logic.
+\Saturn has been primarily developed and maintained by Vesa Karvonen and Carine Morel, and previously by Bartosz Modelski. The work on formal verification has been conducted by Clément Allain. We would like to thank Gabriel Scherer for his feedback.
 
 \printbibliography
 
