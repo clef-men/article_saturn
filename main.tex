@@ -20,6 +20,11 @@
 
 \usepackage{colortbl}
 \usepackage{xcolor}
+
+\usepackage{cleveref}
+
+\usepackage{minted}
+
 %------------------------------------------------------------
 
 \usepackage[style=numeric, sorting=ynt, doi=false, maxnames=10]{biblatex}
@@ -53,6 +58,7 @@ We present \Saturn, a new \OCaml~5 library available on \opam.
 It is well tested, benchmarked and in part formally verified.
 
 \section{Motivation}
+
 Sharing data between multiple threads or cores is a well-known problem. A naive approach is to take a sequential data structure and protect it with a lock. However, this approach is often inefficient in terms of performance, as locks introduce significant contention. Additionally, it may not be a sound solution as it can lead to liveness issues such as deadlock, starvation, and priority inversion.
 
 In contrast, \emph{lock-free} implementations, which rely on fine-grained synchronization instead of locks, are typically faster and guarantee system-wide progress. However, they are also more complex and come with their own set of bugs, such as the ABA problem (largely mitigated in garbage-collected languages), data races, and unexpected behaviors due to non-linearizability.
@@ -76,8 +82,8 @@ They have been adapted to work with and take advantage of the \OCaml~5 memory mo
 For instance, we had to rework the Michael-Scott queue to avoid memory leaks.
 
 % Optimizations
-Regarding performance, we are working on providing benchmarks for each \Saturn's data structure (see section~\ref{sec:benchmarks}), and significant effort has been dedicated to micro-optimization. In particular, we worked on
-(A) preventing false sharing\footnote[1]{False sharing occurs when different domains access different data items contained in the same cache line, forcing unnecessary synchronization. To prevent this, these data must be padded to ensure they are not in the same cache line.},
+Regarding performance, we are working on providing benchmarks for each \Saturn's data structure (see \cref{sec:benchmarks}), and significant effort has been dedicated to micro-optimization. In particular, we worked on
+(A) preventing false sharing\footnote{False sharing occurs when different domains access different data items contained in the same cache line, forcing unnecessary synchronization. To prevent this, these data must be padded to ensure they are not in the same cache line.},
 (B) adding fenceless atomic reads when possible, which improves performance on ARM processors, and
 (C) avoiding the extra indirection in arrays of atomics to reduce memory consumption.
 The feedback we produced while optimizing \Saturn has highlighted some missing features in \OCaml~5 and led to improvements in upstream \OCaml (\href{https://github.com/ocaml/ocaml/pull/12212}{padded atomics}, \href{https://github.com/ocaml/ocaml/pull/12715}{CSE bug fixed}).
@@ -94,8 +100,8 @@ To explore some of these optimizations, we use unsafe features of the language (
 %   - very specific needs and performance
 % - Is it ready ?
 
-% 
-\section{Benchmarks}\label{sec:benchmarks}
+\section{Benchmarks}
+\label{sec:benchmarks}
 
 As we are still in the experimental phase, we provide rough preliminary numbers to give an idea of the library performance. The following tables show the throughput of various queues and stacks implementations. The queue implementations benchmarked are:
 (1) the \Stdlib queue (with one domain only),
@@ -108,7 +114,6 @@ The stack implementations benchmarked are
 (3) a concurrent stack implemented with an atomic list,
 (4) a lock-free Treiber stack from \Saturn.
 The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P+4E cores) using OCaml 5.2.0 (see this \href{https://github.com/lyrm/saturn_benchmarks}{repository} if you want to run your own benchmarks).
-
 
 \begin{table}[htbp]
   \begin{minipage}[t]{0.45\textwidth}
@@ -137,7 +142,7 @@ The tests were run on an Intel i7-1270P (4P+8E cores) and an Apple M3 Max (6P+6P
   \caption{Single domain benchmarks}
 \end{table}
 
-There are several insights to be drawn from these results, but we will highlight a few key points. Firstly, for sequential programs, the \Stdlib queue and stack are the fastest implementations as the concurrent implementations add significant overhead. However, the \Saturn implementations consistently outperform the \Stdlib ones protected with a single lock, even under low contention. Finally, the concurrent stack implemented with an atomic list performs comparably to the Treiber stack\footnote[2]{The Treiber stack is essentially a well-optimized atomic list.} from Saturn. In cases where a simple enough implementation exists, one might wonder why to use Saturn data structures instead of writing it oneself. However, even the atomic-list-based stack is optimized through
+There are several insights to be drawn from these results, but we will highlight a few key points. Firstly, for sequential programs, the \Stdlib queue and stack are the fastest implementations as the concurrent implementations add significant overhead. However, the \Saturn implementations consistently outperform the \Stdlib ones protected with a single lock, even under low contention. Finally, the concurrent stack implemented with an atomic list performs comparably to the Treiber stack\footnote{The Treiber stack is essentially a well-optimized atomic list.} from Saturn. In cases where a simple enough implementation exists, one might wonder why to use Saturn data structures instead of writing it oneself. However, even the atomic-list-based stack is optimized through
 (a) the use of \texttt{make\_contended} to prevent false sharing, and
 (b) a backoff mechanism to reduce contention.
 Without these seemingly small optimizations, the atomic list implementation has a throughput of around 10 M/s regardless of contention (on the Intel machine), which is significantly lower than the Treiber stack's performance. In addition, the \Saturn library provides thorough testing and could provide even more optimized implementations in the future.
@@ -164,46 +169,81 @@ Without these seemingly small optimizations, the atomic list implementation has 
   \caption{Benchmarks with multiple domains in parallel (in millions of messages per second)}
 \end{table}
 
-
 \section{Tests}
 
-In multicore programming, it is essential to test not only the safety of the data structures but also to verify linearizability and lock-freedom when expected.
+In multicore programming, it is essential to test not only the safety of the data structures but also to verify \emph{linearizability}\footnote{See \cref{sec:verification} for the definition of linearizability.}~\cite{DBLP:journals/toplas/HerlihyW90} and \emph{lock-freedom} when expected.
 To achieve this, \Saturn has been thoroughly tested using two primary tools: \DSCheck and \STM.
 
 \STM is used not only for unit testing but also for linearizability.
 It automatically generates random full programs using the provided API---in the case of \Saturn, a data structure.
 These programs are executed in parallel with two domains and all results are checked against the postconditions of each function, providing unit testing.
-Simultaneously, \STM verifies linearizability by ensuring that all intermediate states can be explained by a sequential execution of the calls. The STM \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/stm_treiber_stack.ml}{test for the Treiber stack} are a good example of how simple this is to write.
+Simultaneously, \STM verifies linearizability by ensuring that all intermediate states can be explained by a sequential execution of the calls.
+The STM \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/stm_treiber_stack.ml}{test for the Treiber stack} are a good example of how simple this is to write.
 
-\DSCheck is a model checker based on the DPOR\footnote[3]{DPOR stands for Dynamic Partial-Order Reduction} algorithm~\cite{dpor05}.
+\DSCheck is a model checker based on the DPOR\footnote{DPOR stands for Dynamic Partial-Order Reduction} algorithm~\cite{dpor05}.
 It is designed to compute all possible interleavings between multiple domains and verify that each one returns the expected result.
 This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings.
-Additionally, \DSCheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present. This is a bit more cumbersome to use than \STM (see the \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/treiber_stack_dscheck.ml}{DSCheck tests for the Treiber stack}) but it is still a powerful tool. \DSCheck implementation has been optimized\footnote[4]{See the PRs about \href{https://github.com/ocaml-multicore/dscheck/pull/18}{source sets} and \href{https://github.com/ocaml-multicore/dscheck/pull/22}{granular dependency relation}.} to make the tests quick enough to be used even on the more complex data structures of \Saturn (see \href{https://github.com/ocaml-multicore/saturn/blob/main/test/skiplist/stm_skiplist.ml}{the skiplist DSCheck tests}).
+Additionally, \DSCheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present.
+This is a bit more cumbersome to use than \STM (see the \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/treiber_stack_dscheck.ml}{DSCheck tests for the Treiber stack}) but it is still a powerful tool.
+\DSCheck implementation has been optimized\footnote{See the PRs about \href{https://github.com/ocaml-multicore/dscheck/pull/18}{source sets} and \href{https://github.com/ocaml-multicore/dscheck/pull/22}{granular dependency relation}.} to make the tests quick enough to be used even on the more complex data structures of \Saturn\footnote{See \href{https://github.com/ocaml-multicore/saturn/blob/main/test/skiplist/stm_skiplist.ml}{the skiplist DSCheck tests}.}.
 
 \section{Formal verification}
+\label{sec:verification}
 
 Lock-free algorithms are notoriously difficult to get right.
 To provide stronger guarantees, we have verified part of \Saturn's data structures and aim at covering the entire library.
-Moreover, one important benefit is that we get formal specifications for verified data structures.
+At the time of writing, this effort essentially comprises concurrent bags, stacks and queues.
+One important benefit is that we get formal specifications for verified data structures.
 
-This verification effort has been conducted using \Iris~\cite{DBLP:journals/jfp/JungKJBBD18}, a state-of-the-art mechanized \emph{concurrent separation logic}.
-In particular, all proofs are formalized in \Coq.
+The standard correctness criterion for concurrent data structures is \emph{linearizability}~\cite{DBLP:journals/toplas/HerlihyW90}.
+It requires each operation on a data structure to appear to take effect instantaneously at some point during its execution, called the \emph{linearization point}, such that the linearization points of all operations form a coherent sequential history.
 
-A common criterion to specify concurrent operations on shared data structures is \emph{linearizability}.
-The equivalent \Iris notion is \emph{logical atomicity}: there exists a point in time when a concurrent operation atomically takes effect (the linearization point).
-This statement takes the form of an \emph{atomic specification}:
+To verify this criterion, we rely on \Iris~\cite{DBLP:journals/jfp/JungKJBBD18}, a state-of-the-art mechanized \emph{concurrent separation logic}.
+\Iris has been successfully used in the past to verify realistic data structures~\cite{DBLP:conf/cpp/VindumB21, DBLP:conf/cpp/VindumFB22, DBLP:journals/pacmpl/MevelJ21}.
+All proofs are formalized in \Coq and available on \href{https://github.com/clef-men/zoo}{\texttt{github}}.
+
+Concretely, we first translate the original code from \Saturn to a deeply embedded language in \Coq.
+At the time of writing, this translation is manual but could be automated.
+It preserves the essence of the implementation, focusing on the most important operations and omitting minor aspects not affecting the correctness.
+For instance, consider the following \texttt{push} function from the implementation of a concurrent stack:
+
+\begin{minted}{ocaml}
+let rec push t v =
+  let old = Atomic.get t in
+  let new = v :: old in
+  if not (Atomic.compare_and_set t old new) then (
+    Domain.cpu_relax () ;
+    push t v
+  )
+\end{minted}
+
+In \Coq, \texttt{push} translates to the \texttt{stack\_push} function:
+
+\begin{minted}{coq}
+Definition stack_push : val :=
+  rec: "stack_push" "t" "v" =>
+    let: "old" := !"t" in
+    let: "new" := ‘Cons( "v", "old" ) in
+    ifnot: CAS "t" "old" "new" then (
+      Yield ;;
+      "stack_push" "t" "v"
+    ).
+\end{minted}
+
+The \Iris way to formulate linearizability is through \emph{logically atomic specifications}~\cite{DBLP:conf/ecoop/PintoDG14}, which has been proven to be equivalent~\cite{DBLP:journals/pacmpl/BirkedalDGJST21} in sequentially consistent memory models.
+For instance, the specification of \texttt{stack\_push} takes the following form:
 
 \[
   \aspec{
-    \mathrm{queue \mathhyphen inv}\ t
+    \mathrm{stack \mathhyphen inv}\ t
   }{
     \mathit{vs}
   }{
-    \mathrm{queue \mathhyphen model}\ t\  \mathit{vs}
+    \mathrm{stack \mathhyphen model}\ t\  \mathit{vs}
   }{
-    \texttt{queue\_push}\ t\ v
+    \texttt{stack\_push}\ t\ v
   }{
-    \mathrm{queue \mathhyphen model}\ t\  (\mathit{vs} \mdoubleplus [v])
+    \mathrm{stack \mathhyphen model}\ t\  (v :: \mathit{vs})
   }{
     \texttt{()}
   }{
@@ -211,17 +251,17 @@ This statement takes the form of an \emph{atomic specification}:
   }
 \]
 
-In this example, we specify the \texttt{queue\_push} operation from an implementation of a concurrent queue.
-Similarly to \href{https://en.wikipedia.org/wiki/Hoare_logic}{Hoare triples}, the two assertions inside curly brackets express the precondition and postcondition.
-Here, the $\mathrm{queue \mathhyphen inv}\ t$ precondition represents the queue invariant.
-As it is persistent, we do not need to give it back in the postcondition.
-The other two assertions inside angle brackets express the \emph{atomic precondition} and \emph{atomic postcondition}.
-Basically, they specify the linearization point of the operation: during the execution of \texttt{queue\_push}, the logical model of the queue is atomically updated from $\mathit{vs}$ to $\mathit{vs} \mdoubleplus [v]$, in other words $v$ is atomically pushed at the back of the queue.
+Similarly to \href{https://en.wikipedia.org/wiki/Hoare_logic}{Hoare triples}, the two assertions inside curly brackets represent the precondition and postcondition for the caller.
+The $\mathrm{stack \mathhyphen inv}\ t$ precondition is the stack invariant, which contains the concurrent protocol governing the data structure.
+For this particular operation, the postcondition is trivial.
+
+The other two assertions inside angle brackets represent the \emph{atomic precondition} and \emph{atomic postcondition}.
+They specify the linearization point of the operation: during the execution of \texttt{stack\_push}, the abstract state of the stack held by $\mathrm{stack \mathhyphen model}$ is atomically updated from $\mathit{vs}$ to $v :: \mathit{vs}$; in other words, $v$ is atomically pushed at the top of the stack.
 
 As a final note, we emphasize that our verification assumes a sequentially consistent memory model.
-Nevertheless, \OCaml~5's relaxed memory model has been formalized~\cite{DBLP:journals/pacmpl/MevelJP20} in \Iris.
-It should be possible and is future work to adapt our specifications and proofs to support it.
-
+However, \OCaml~5's weak memory model has been formalized~\cite{DBLP:journals/pacmpl/MevelJP20} in \Iris.
+Prior work~\cite{DBLP:journals/pacmpl/MevelJ21} has shown how to extend logically atomic specifications in this setting.
+Adapting our specifications and proofs should be rather straightforward and is future work.
 
 \section{Acknowledgments}
 
