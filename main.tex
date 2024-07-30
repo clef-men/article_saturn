@@ -171,7 +171,7 @@ Without these seemingly small optimizations, the atomic list implementation has 
 
 \section{Tests}
 
-In multicore programming, it is essential to test not only the safety of the data structures but also to verify \emph{linearizability}\footnote{See \cref{sec:verification} for the definition of linearizability.}~\cite{DBLP:journals/toplas/HerlihyW90} and \emph{lock-freedom} when expected.
+In multicore programming, it is essential to test not only the safety of the data structures but also to verify \emph{linearizability}\footnote{See \cref{sec:verification} for the definition of linearizability.}~\cite{DBLP:journals/toplas/HerlihyW90} and \emph{lock-freedom}\footnote{Roughly, lock-freedom guarantees system-wide progress. For more details, see \href{https://en.wikipedia.org/wiki/Non-blocking_algorithm\#Lock-freedom}{Wikipedia}.} when expected.
 To achieve this, \Saturn has been thoroughly tested using two primary tools: \DSCheck and \STM.
 
 \STM is used not only for unit testing but also for linearizability.
