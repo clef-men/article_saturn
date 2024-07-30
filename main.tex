@@ -181,7 +181,7 @@ Simultaneously, \STM verifies linearizability by ensuring that all intermediate 
 The STM \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/stm_treiber_stack.ml}{test for the Treiber stack} are a good example of how simple this is to write.
 
 \DSCheck is a model checker based on the DPOR\footnote{DPOR stands for Dynamic Partial-Order Reduction} algorithm~\cite{dpor05}.
-It is designed to compute all possible interleavings between multiple domains and verify that each one returns the expected result.
+It is designed to compute all possible interleavings of instructions between multiple domains and verify that each one returns the expected result.
 This is particularly useful for catching elusive bugs that occur only in specific, rare interleavings.
 Additionally, \DSCheck can be used to verify that a program is lock-free, as it will fail to terminate if any form of blocking is present.
 This is a bit more cumbersome to use than \STM (see the \href{https://github.com/ocaml-multicore/saturn/blob/main/test/treiber_stack/treiber_stack_dscheck.ml}{DSCheck tests for the Treiber stack}) but it is still a powerful tool.
