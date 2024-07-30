@@ -230,7 +230,7 @@ Definition stack_push : val :=
     ).
 \end{minted}
 
-The \Iris way to formulate linearizability is through \emph{logically atomic specifications}~\cite{DBLP:conf/ecoop/PintoDG14}, which have been proven to be equivalent~\cite{DBLP:journals/pacmpl/BirkedalDGJST21} in sequentially consistent memory models.
+The \Iris way to formulate linearizability is through \emph{logically atomic specifications}~\cite{DBLP:conf/ecoop/PintoDG14}, which have been proven~\cite{DBLP:journals/pacmpl/BirkedalDGJST21} to be equivalent to linearizability in sequentially consistent memory models.
 For instance, the specification of \texttt{stack\_push} takes the following form:
 
 \[
@@ -252,8 +252,10 @@ For instance, the specification of \texttt{stack\_push} takes the following form
 \]
 
 Similarly to \href{https://en.wikipedia.org/wiki/Hoare_logic}{Hoare triples}, the two assertions inside curly brackets represent the precondition and postcondition for the caller.
-The $\mathrm{stack \mathhyphen inv}\ t$ precondition is the stack invariant, which contains the concurrent protocol governing the data structure.
 For this particular operation, the postcondition is trivial.
+The $\mathrm{stack \mathhyphen inv}\ t$ precondition is the stack invariant.
+Intuitively, it asserts that $t$ is a valid concurrent stack.
+More precisely, it enforces a set of logical constraints---a concurrent protocol---that $t$ must respect at all times.
 
 The other two assertions inside angle brackets represent the \emph{atomic precondition} and \emph{atomic postcondition}.
 They specify the linearization point of the operation: during the execution of \texttt{stack\_push}, the abstract state of the stack held by $\mathrm{stack \mathhyphen model}$ is atomically updated from $\mathit{vs}$ to $v :: \mathit{vs}$; in other words, $v$ is atomically pushed at the top of the stack.
