@@ -210,8 +210,8 @@ For instance, consider the following \texttt{push} function from the implementat
 \begin{minted}{ocaml}
 let rec push t v =
   let old = Atomic.get t in
-  let new = v :: old in
-  if not (Atomic.compare_and_set t old new) then (
+  let new_ = v :: old in
+  if not (Atomic.compare_and_set t old new_) then (
     Domain.cpu_relax () ;
     push t v
   )
