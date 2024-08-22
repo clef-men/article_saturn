@@ -1,0 +1,43 @@
+\RequirePackage{xspace}
+\RequirePackage{hyperref}
+
+%------------------------------------------------------------
+
+\newcommand{\OCaml}{\textsc{OCaml}\xspace}
+\newcommand{\Flambda}{\href{https://ocaml.org/manual/5.2/flambda.html}{\textsc{Flambda}}\xspace}
+\newcommand{\Saturn}{\href{https://github.com/ocaml-multicore/saturn}{\textsc{Saturn}}\xspace}
+\newcommand{\Coq}{\href{https://coq.inria.fr/}{\textsc{Coq}}\xspace}
+\newcommand{\Iris}{\href{https://iris-project.org/}{\textsc{Iris}}\xspace}
+\newcommand{\opam}{\href{https://opam.ocaml.org/}{\texttt{opam}}\xspace}
+\newcommand{\Domainslib}{\href{https://github.com/ocaml-multicore/domainslib}{\texttt{Domainslib}}\xspace}
+\newcommand{\Eio}{\href{https://github.com/ocaml-multicore/eio}{\texttt{Eio}}\xspace}
+\newcommand{\DSCheck}{\href{https://github.com/ocaml-multicore/dscheck}{\textsc{DSCheck}}\xspace}
+\newcommand{\STM}{\href{https://github.com/ocaml-multicore/multicoretests}{\textsc{STM}}\xspace}
+\newcommand{\Cpp}{\textsc{C}\texttt{++}\xspace}
+
+\newcommand{\best}[1]{\cellcolor{green!25}#1}
+\newcommand{\worst}[1]{\cellcolor{red!25}#1}
+\newcommand{\Stdlib}{\texttt{Stdlib}\xspace}
+
+%------------------------------------------------------------
+
+\newcommand{\mathhyphen}{{\hbox{-}}}
+
+\newcommand\doubleplus{+\kern-1.3ex+\kern0.8ex}
+\newcommand\mdoubleplus{\ensuremath{\mathbin{+\mkern-10mu+}}}
+
+%------------------------------------------------------------
+
+\newcommand{\aspec}[7]{%
+	\begin{array}{c}
+			\left\lbrace\, #1 \,\right\rbrace
+		\\ \hline
+			\left\langle\, #2 \ldotp #3 \,\right\rangle
+		\\ \hline
+			#4
+		\\ \hline
+			\left\langle\, #5 \,\right\rangle
+		\\ \hline
+			\left\lbrace\, #6 \ldotp #7 \,\right\rbrace
+	\end{array}
+}

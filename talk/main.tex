@@ -1,0 +1,89 @@
+\documentclass[xcolor=x11names]{beamer}
+
+\usetheme{metropolis}           % Use metropolis them
+\usecolortheme{metropolis}
+
+\definecolor{TaridesDarkBlue}{RGB}{10, 63, 92}
+\definecolor{TaridesMidDarkBlue}{RGB}{1, 91, 140} %015B8C
+\definecolor{TaridesMidBlue}{RGB}{3, 150, 216}   % 0396D8
+\definecolor{TaridesBrightBlue}{RGB}{55, 180, 236} % 37B4EC
+\definecolor{TaridesLightBlue}{RGB}{144, 216, 252} % 90D8FC
+
+
+\usepackage{macros}
+
+% Various packages
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{xcolor}
+\usepackage{listings,lstautogobble}
+\usepackage{courier}
+\lstset{language=caml,autogobble=true,
+        commentstyle=\color{TaridesBrightBlue},
+        basicstyle=\footnotesize\ttfamily,
+        breaklines=true,
+        morekeywords={val},
+        morekeywords=[2]{int, string, file_perm, unit, dir_handle, file_descr, open_flag, bytes, bool, option, list, inet_addr, array, host_entry, socket_domain, socket_type, sockaddr},
+        keywordstyle=[2]{\color{TaridesMidDarkBlue}}
+        }
+
+\usepackage{graphicx}
+\usepackage{pifont}
+\usepackage{hyperref}
+
+\AtBeginSubsection[]
+{
+ \begin{frame}
+  \vfill
+  \centering
+  %\begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+    \usebeamerfont{title}\insertsubsectionhead\par%
+  %\end{beamercolorbox}
+  \vfill
+  \end{frame}}
+
+\setbeamertemplate{blocks}[rounded][shadow=true]
+\setbeamertemplate{itemize subitem}[bullet]
+
+%?
+\newcommand{\added}[1]{\textcolor{gray!60!cyan}{#1}}
+% Subtitle
+\newcommand{\subtt}[1]{\textcolor{gray!30!cyan}{#1}}
+
+%------------------------------------------------------------
+
+\usepackage{macros}
+
+%------------------------------------------------------------
+
+
+\title{\Saturn: a library of verified concurrent data structures for \OCaml~5}
+\date{\today}
+\author{
+  Clément Allain (INRIA),
+  Vesa Karvonen (Tarides) and
+  Carine Morel (Tarides)
+}
+
+
+\begin{document}
+\maketitle
+\input{intro}
+
+\section{Saturn}
+\input{part1}
+
+
+\section{Verification}
+\input{part2}
+
+\begin{frame}{The end}
+\Large
+\centering
+Questions
+\end{frame}
+\end{document}
