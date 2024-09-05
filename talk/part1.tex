@@ -1,4 +1,213 @@
-
-\begin{frame}{Intro}
-
+\begin{frame}{Why \Saturn ?}
+    \hfill\small{\href{https://github.com/ocaml-multicore/saturn}{Github: ocaml-multicore/saturn}
+\vfill
+    \begin{itemize}[label=$\bullet$]
+        \item A collection of concurrent-safe data structures for \OCaml~5: 
+        \begin{itemize}[label=$\diamond$]
+            \item well-tested
+            \item benchmarked
+            \item optimized
+            \item verified
+        \end{itemize}
+        \item<2-> Writting concurrent code is hard 
+    \end{itemize}
+    }
+    \vfill
 \end{frame}
+
+% Pour faire plus simple:
+% - Saturn = lib de structure de donnée parce que :
+%   + c'est déjà diff en séquentiel
+%   + et ça le devient encore plus concurrent (c'est l'enfer)
+%   -> tu veux pas le réécrire toi meme et c'est donc important d'avoir une bonne lib de structure de données concurrente
+
+
+% En fait meme les structures de données les plus simples en séquentiel comme une queue c'est pas facile en concurrent. D'ailleurs, j'ai cherché sur git hub en cherchant Atomic dans le code ocaml sur github (que j'ai anomysé)
+
+% Expliquer Atomic -> ça c'est un morceau de code ocaml qui utilise les primitives 
+
+%En concurrence tout devient complexe meme une queue, donc les gens le font eux-meme et c'est pas une bonne idée
+\begin{frame}[fragile]{Buggy queue with size}     
+    \begin{lstlisting}
+        module Queue = Saturn.Queue 
+        type 'a t = {size : int Atomic.t; queue : 'a Queue.t}
+
+        let create () = 
+            {size = Atomic.make 0; queue = Queue.create ()}
+        
+        let push t msg =
+          Atomic.incr t.size;
+          Queue.push t.queue msg
+        
+        let pop_opt t =
+          match Queue.pop_opt t.queue with
+          | Some elt ->  Atomic.decr t.size; Some elt
+          | None -> Atomic.set t.size 0; None
+        
+        let size t = Atomic.get t.size
+    \end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]{Buggy queue with size}
+    \begin{lstlisting}
+    let test () =
+     let queue = create () in
+     let d1 = Domain.spawn (fun () -> push queue 1) in 
+     let d2 = Domain.spawn (fun () -> pop_opt queue |> ignore) in 
+     Domain.join d1;
+     Domain.join d2;
+     pop_opt queue |> ignore;
+     size queue
+    \end{lstlisting}
+
+    \begin{itemize}
+        \item<2-> In 10 to 20\% of the tries, the test returns a size of $-1$. 
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Why \Saturn ?}
+    \hfill\small{\href{https://github.com/ocaml-multicore/saturn}{Github: ocaml-multicore/saturn}
+    \vfill
+        \begin{itemize}[label=$\bullet$]
+            \item A collection of concurrent-safe data structures for \OCaml~5: 
+            \begin{itemize}[label=$\diamond$]
+                \item well-tested
+                \item benchmarked
+                \item optimized
+                \item verified
+            \end{itemize}
+            \item Writting concurrent code is hard 
+            \begin{itemize}[label=$\diamond$]
+                \item bugs that can be hard to reproduce and understand
+                % \item progress properties: deadlock, starvation etc..
+            \end{itemize}  
+        \end{itemize}
+        }
+        \vfill
+\end{frame}
+
+% C'est treiber stack : un truc classique de la litt
+\begin{frame}[fragile]{Concurrent stack: Treiber stack}     
+    \begin{lstlisting}
+        type 'a t = 'a list Atomic.t
+
+        let create () = Atomic.make []
+      
+        let rec push q a =
+          let old = Atomic.get q in
+          if Atomic.compare_and_set q old (a :: old) then ()
+          else push q a
+      
+        let rec pop_opt q =
+          let old = Atomic.get q in
+          match old with
+          | [] -> None
+          | x :: xs -> 
+            if Atomic.compare_and_set q old xs then Some x 
+            else pop_opt q
+    \end{lstlisting}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[xshift=20mm,yshift=-20mm,anchor=north west] at (current page.north west){%       
+          \includegraphics<2>[width=0.8\linewidth]{images/atomic_list2.pdf}          
+          \includegraphics<3>[width=0.8\linewidth]{images/atomic_list1.pdf}
+         \includegraphics<4>[width=0.8\linewidth]{images/atomic_list.pdf}};
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Why \Saturn ?}
+    \begin{itemize}[label=$\bullet$]
+        \item \OCaml~5 : multicore programming
+        \item Writting concurrent code is hard 
+            \begin{itemize}[label=$\diamond$]
+                \item bugs that can be hard to reproduce and understand
+                \item progress properties: deadlock, starvation etc..
+            \end{itemize}  
+        \item Writting efficient concurrent code is even harder
+        \begin{itemize}[label=$\diamond$]
+            \item different behaviors on different CPU architectures
+            \item space to benchmarks is way larger
+            \item ... 
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Peut etre retirer les trucs en rouge
+% Pourquoi tout n'est pas lockfree
+\begin{frame}{What is in \Saturn ?}
+    \begin{itemize}[label=$\bullet$]
+        \item<1-> A collection of concurrent-safe data structures for \OCaml~5
+        \begin{itemize}[label=$\diamond$]
+            \item<2-> Queues
+                \begin{itemize}[label=$\circ$]
+                \item multi-producer, multi-consumer
+                \item single-producer, single-consumer 
+                % \color{white}\color<3>{red}(unsafe if misused)\color{black}
+                \item single-producer, multi-consumer 
+                % \color{white}\color<3>{red}{(unsafe if misused)}\color{black}
+                \item bounded, blocking (opened PRs)
+                \end{itemize}
+            \item<3-> Work-stealing deque
+            \item<3-> Stacks 
+            \item<3-> Hashtable (opened PR)
+            \item<3-> Skiplist: a sorted linked list with $o(\log(n))$ operations
+            \item<3-> Bag
+        \end{itemize}
+        \item<4-> Most available data structures are lock-free 
+        \begin{itemize}[label=$\rightarrow$]
+            \item<5-> Two libraries: \Saturn and \Saturnlf
+        \end{itemize}
+    \end{itemize}
+ \end{frame}
+
+
+ \begin{frame}{Testing in \Saturn}
+    What should (and can) be tested ?
+    \begin{itemize}[label=$\bullet$]
+     \item Correctness 
+     \item Linearizability
+     \item Progress (i.e. lock freedom) 
+    \end{itemize}
+    How ?
+    \begin{itemize}[label=$\bullet$]
+     \item Lin / STM (\href{https://github.com/ocaml-multicore/multicoretests}{ocaml-multicore/multicoretest})
+        \begin{itemize}
+            \item Correctness
+            \item Linearizability
+        \end{itemize}
+     \item Dscheck (\href{https://github.com/ocaml-multicore/dscheck}{ocaml-multicore/dscheck})\begin{itemize}
+        \item Correctness
+        \item Lock-freedom
+        \end{itemize}
+    \end{itemize}
+ 
+  \end{frame}
+
+ % deux trucs : (1) des choses qu'on n'a pas reussi à faire sans casser le type checker mais qui donne de bonnes perfs mais si vous avez des idées de le faire sans obj.magic, let's us know (2) vrai diff de perf = donne une idée du niveau de perf qu'on pourrait avoir en améliorant ocaml
+
+ % une version expérimentale qui donne de meilleures performances et on aimerait bien qu'un jour on puisse avoir ces perfs  sans casser le type checker
+
+\begin{frame}{Optimizations}
+    Micro-optimizations
+    \begin{itemize}[label=$\diamond$]
+        \item On algorithms, to prevent false sharing, indirections etc..
+        \item Experimental: some use \textbf{Obj.magic} (e.g. $\text{Saturn.Queue\_unsafe}$)
+    \end{itemize}
+\end{frame}
+
+%  \begin{frame}{Is it any good ?}
+%    \centering\includegraphics[width=0.55\linewidth]{images/Queue.pdf}
+%     \onslide<2->{\includegraphics[width=0.55\linewidth]{images/Stack.pdf}}
+%     \only<3>{\url{https://github.com/lyrm/saturn-benchmarks/}}
+%  \end{frame}
+
+  \begin{frame}{Is it any good ?}
+    \centering\includegraphics[width=0.8\linewidth]{images/Queue.pdf}
+ \end{frame}
+
+
+ \begin{frame}{Is it any good ?}
+\centering
+    \includegraphics[width=0.8\linewidth]{images/Stack.pdf}
+     \only<2>{\url{https://github.com/lyrm/saturn-benchmarks/}}
+  \end{frame}

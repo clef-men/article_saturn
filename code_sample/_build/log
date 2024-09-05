@@ -1,0 +1,17 @@
+# dune exec ./test/test_code_sample.exe
+# OCAMLPARAM: unset
+# Shared cache: disabled
+# Shared cache location: /home/lyrm/.cache/dune/db
+# Workspace root:
+# /home/lyrm/Documents/Tarides/Multicore/article_saturn/code_sample
+# Auto-detected concurrency: 16
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /home/lyrm/.opam/saturn2/bin/ocamlc.opt -config > /tmp/dune_7c2bfe_output
