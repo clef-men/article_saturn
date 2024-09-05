@@ -1,0 +1,121 @@
+\begin{frame}{Formal verification}
+\centering
+\Large
+\emph{Testing} a concurrent algorithm is hard due to the number of potential interleavings.
+\vfill
+\emph{Formal verification} is here to help us!
+\vfill
+\begin{tabular}{ccc}
+        \includegraphics[scale=0.7]{images/iris.png}
+    &&
+        \includegraphics[scale=0.5]{images/coq.png}
+\end{tabular}
+\end{frame}
+
+\begin{frame}[fragile]{From \OCaml to \Coq}
+\centering
+\small
+\begin{minted}{ocaml}
+let rec push t v =
+  let old = Atomic.get t in
+  let new_ = v :: old in
+  if not (Atomic.compare_and_set t old new_) then (
+    Domain.cpu_relax () ;
+    push t v
+  )
+\end{minted}
+\vspace{-6mm}
+\hfill \OCaml
+\medskip
+\hrule
+\hfill \Coq
+\vspace{-6mm}
+\begin{minted}{coq}
+Definition stack_push : val :=
+  rec: "stack_push" "t" "v" =>
+    let: "old" := !"t" in
+    let: "new" := ‘Cons( "v", "old" ) in
+    ifnot: CAS "t" "old" "new" then (
+      Yield ;;
+      "stack_push" "t" "v"
+    ).
+\end{minted}
+\end{frame}
+
+\begin{frame}{Proving linearizability}
+\centering
+\Large
+\begin{tabular}{ccccc}
+    linearizability
+  &&
+    $\stackrel[\text{in SC}]{}{\simeq}$
+  &&
+    $\aspec{
+      \mathrm{stack \mathhyphen inv}\ t
+    }{
+      \mathit{vs}
+    }{
+      \mathrm{stack \mathhyphen model}\ t\ \mathit{vs}
+    }{
+      \texttt{stack\_push}\ t\ v
+    }{
+      \mathrm{stack \mathhyphen model}\ t\ (v :: \mathit{vs})
+    }{
+      \texttt{()}
+    }{
+      \mathrm{True}
+    }$
+\end{tabular}
+\vfill
+\normalsize
+\emph{Theorems for free from separation logic specifications} \\
+Birkedal, Dinsdale-Young, Guéneau, Jaber, Svendsen \& Tzevelekos
+\end{frame}
+
+\begin{frame}{Relaxed memory model (future work)}
+\centering
+\large
+\[
+    \aspec{
+      \mathrm{stack \mathhyphen inv}\ t
+    }{
+      v_0, \dots, v_n, \textcolor{red}{\mathcal{V}_0}, \dots, \textcolor{red}{\mathcal{V}_n}
+    }{
+      \mathrm{stack \mathhyphen model}\ t\ ((v_0, \textcolor{red}{\mathcal{V}_0}), \dots (v_n, \textcolor{red}{\mathcal{V}_n}))
+    }{
+      \texttt{stack\_push}\ t\ v, \textcolor{red}{\mathcal{V}}
+    }{
+      \mathrm{stack \mathhyphen model}\ t\ ((v, \textcolor{red}{\mathcal{V}}), (v_0, \textcolor{red}{\mathcal{V}_0}), \dots (v_n, \textcolor{red}{\mathcal{V}_n}))
+    }{
+      \texttt{()}
+    }{
+      \mathrm{True}
+    }
+\]
+\vfill
+\normalsize
+\emph{Cosmo: a concurrent separation logic for multicore \OCaml} \\
+Mével, Jourdan \& Pottier
+\end{frame}
+
+\begin{frame}[fragile]{Writing concurrent protocols in \Iris}
+\small
+\begin{minted}{coq}
+Definition stack_inv t ι : iProp Σ :=
+  ∃ l γ,
+  ⌜t = #l⌝ ∗ meta l nroot γ ∗
+  inv ι (
+    ∃ vs, l ↦ lst_to_val vs ∗ stack_model₂ γ vs
+  ).
+
+Lemma stack_push_spec t ι v :
+  <<< stack_inv t ι
+  |   ∀∀ vs, stack_model t vs >>>
+          stack_push t v @ ↑ι
+  <<< stack_model t (v :: vs)
+  |   RET (); True            >>>.
+Proof.
+  ...
+Qed.
+\end{minted}
+\end{frame}

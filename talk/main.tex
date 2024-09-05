@@ -1,6 +1,12 @@
 \documentclass[xcolor=x11names]{beamer}
 
-\usetheme{metropolis}           % Use metropolis them
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+%------------------------------------------------------------
+
+\usetheme{metropolis}
 \usecolortheme{metropolis}
 
 \definecolor{TaridesDarkBlue}{RGB}{10, 63, 92}
@@ -9,31 +15,7 @@
 \definecolor{TaridesBrightBlue}{RGB}{55, 180, 236} % 37B4EC
 \definecolor{TaridesLightBlue}{RGB}{144, 216, 252} % 90D8FC
 
-
-\usepackage{macros}
-
-% Various packages
-\usepackage[utf8]{inputenc}
-\usepackage[french]{babel}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage{enumitem}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{xcolor}
-\usepackage{listings,lstautogobble}
-\usepackage{courier}
-\lstset{language=caml,autogobble=true,
-        commentstyle=\color{TaridesBrightBlue},
-        basicstyle=\footnotesize\ttfamily,
-        breaklines=true,
-        morekeywords={val},
-        morekeywords=[2]{int, string, file_perm, unit, dir_handle, file_descr, open_flag, bytes, bool, option, list, inet_addr, array, host_entry, socket_domain, socket_type, sockaddr},
-        keywordstyle=[2]{\color{TaridesMidDarkBlue}}
-        }
-
-\usepackage{graphicx}
-\usepackage{pifont}
-\usepackage{hyperref}
+%------------------------------------------------------------
 
 \usepackage{tikz}
 
@@ -51,6 +33,29 @@
 \setbeamertemplate{blocks}[rounded][shadow=true]
 \setbeamertemplate{itemize subitem}[bullet]
 
+%------------------------------------------------------------
+
+\usepackage{lmodern}
+
+\usepackage{enumitem}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{stackrel}
+
+\usepackage{xcolor}
+
+\usepackage{listings,lstautogobble}
+
+\usepackage{courier}
+
+\usepackage{graphicx}
+
+\usepackage{pifont}
+
+\usepackage{hyperref}
+
+\usepackage{changepage}
+
 %?
 \newcommand{\added}[1]{\textcolor{gray!60!cyan}{#1}}
 % Subtitle
@@ -58,34 +63,59 @@
 
 %------------------------------------------------------------
 
+\lstset{language=caml,autogobble=true,
+        commentstyle=\color{TaridesBrightBlue},
+        basicstyle=\footnotesize\ttfamily,
+        breaklines=true,
+        morekeywords={val},
+        morekeywords=[2]{int, string, file_perm, unit, dir_handle, file_descr, open_flag, bytes, bool, option, list, inet_addr, array, host_entry, socket_domain, socket_type, sockaddr},
+        keywordstyle=[2]{\color{TaridesMidDarkBlue}}
+        }
+        
+%------------------------------------------------------------
+
+\usepackage{minted}
+
+\DeclareUnicodeCharacter{3B3}{$\gamma$}
+\DeclareUnicodeCharacter{3B9}{$\iota$}
+\DeclareUnicodeCharacter{3A3}{$\Sigma$}
+\DeclareUnicodeCharacter{2208}{$\in$}
+\DeclareUnicodeCharacter{2200}{$\forall$}
+\DeclareUnicodeCharacter{2203}{$\exists$}
+\DeclareUnicodeCharacter{2217}{$\ast$}
+\DeclareUnicodeCharacter{231C}{$\ulcorner$}
+\DeclareUnicodeCharacter{231D}{$\urcorner$}
+\DeclareUnicodeCharacter{21A6}{$\mapsto$}
+\DeclareUnicodeCharacter{2082}{$_2$}
+
+%------------------------------------------------------------
+
 \usepackage{macros}
 
 %------------------------------------------------------------
 
-
 \title{\Saturn: a library of verified concurrent data structures for \OCaml~5}
 \date{\today}
 \author{
-  Clément Allain (INRIA),
-  Vesa Karvonen (Tarides) and
+  Clément Allain (INRIA Paris) \\
+  Vesa Karvonen (Tarides) \\
   Carine Morel (Tarides)
 }
 
-
 \begin{document}
+
 \maketitle
 
-\section{Saturn}
+\input{intro}
 
-% \input{intro}
-\input{part1}
+\input{saturn}
 
-\section{Verification}
-\input{part2}
+\input{verification}
 
-\begin{frame}{The end}
-\Large
+\begin{frame}[plain, noframenumbering]
+\LARGE
 \centering
-Questions
+Thank you for your attention!
 \end{frame}
+
 \end{document}
