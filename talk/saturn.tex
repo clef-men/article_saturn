@@ -136,26 +136,30 @@
 % Pourquoi tout n'est pas lockfree
 \begin{frame}{What is in \Saturn ?}
     \begin{itemize}[label=$\bullet$]
-        \item<1-> A collection of concurrent-safe data structures for \OCaml~5
+        \item A collection of concurrent-safe data structures for \OCaml~5
         \begin{itemize}[label=$\diamond$]
-            \item<2-> Queues
-                \begin{itemize}[label=$\circ$]
-                \item multi-producer, multi-consumer
+           \item Queues
+           \only<2>{ \begin{itemize}[label=$\circ$]
+                \item multi-producer, multi-consumer (based on Michael-Scott queue algorithm)
                 \item single-producer, single-consumer 
                 % \color{white}\color<3>{red}(unsafe if misused)\color{black}
                 \item single-producer, multi-consumer 
                 % \color{white}\color<3>{red}{(unsafe if misused)}\color{black}
                 \item bounded, blocking (opened PRs)
-                \end{itemize}
-            \item<3-> Work-stealing deque
-            \item<3-> Stacks 
-            \item<3-> Hashtable (opened PR)
-            \item<3-> Skiplist: a sorted linked list with $o(\log(n))$ operations
-            \item<3-> Bag
+                \end{itemize}}
+            \item<4-> Work-stealing deque
+            \item<4-> Stacks 
+            \item<4-> Hashtable (opened PR)
+            \item<4-> Skiplist: a sorted linked list with $o(\log(n))$ operations
+            \item<4-> Bag
         \end{itemize}
-        \item<4-> Most available data structures are lock-free 
+        \item<5-> Need something else ? 
         \begin{itemize}[label=$\rightarrow$]
-            \item<5-> Two libraries: \Saturn and \Saturnlf
+            \item Open an issue on  \href{https://github.com/ocaml-multicore/saturn}{ocaml-multicore/saturn}
+        \end{itemize}
+        \item<6-> Most available data structures are lock-free 
+        \begin{itemize}[label=$\rightarrow$]
+            \item<6-> Two libraries: \Saturn and \Saturnlf
         \end{itemize}
     \end{itemize}
  \end{frame}
@@ -189,10 +193,12 @@
  % une version expérimentale qui donne de meilleures performances et on aimerait bien qu'un jour on puisse avoir ces perfs  sans casser le type checker
 
 \begin{frame}{Optimizations}
-    Micro-optimizations
+    Numerous micro-optimizations:
     \begin{itemize}[label=$\diamond$]
-        \item On algorithms, to prevent false sharing, indirections etc..
-        \item Experimental: some use \textbf{Obj.magic} (e.g. $\text{Saturn.Queue\_unsafe}$)
+        \item Improving algorithms,
+        \item Avoiding false sharing,
+        \item Removing indirections etc..
+        \item Experimental: some optimizations use \textbf{Obj.magic} (e.g. $\text{Saturn.Queue\_unsafe}$)
     \end{itemize}
 \end{frame}
 
