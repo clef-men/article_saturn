@@ -116,21 +116,22 @@
 \end{frame}
 
 \begin{frame}{Why \Saturn ?}
+    \hfill\small{\href{https://github.com/ocaml-multicore/saturn}{Github: ocaml-multicore/saturn}
+\vfill
     \begin{itemize}[label=$\bullet$]
-        \item \OCaml~5 : multicore programming
-        \item Writting concurrent code is hard 
-            \begin{itemize}[label=$\diamond$]
-                \item bugs that can be hard to reproduce and understand
-                \item progress properties: deadlock, starvation etc..
-            \end{itemize}  
-        \item Writting efficient concurrent code is even harder
+        \item A collection of concurrent-safe data structures for \OCaml~5: 
         \begin{itemize}[label=$\diamond$]
-            \item different behaviors on different CPU architectures
-            \item space to benchmarks is way larger
-            \item ... 
+            \item well-tested
+            \item benchmarked
+            \item optimized
+            \item verified
         \end{itemize}
+        \item Writting concurrent code is hard 
     \end{itemize}
+    }
+    \vfill
 \end{frame}
+
 
 % Peut etre retirer les trucs en rouge
 % Pourquoi tout n'est pas lockfree
@@ -174,7 +175,7 @@
     \end{itemize}
     How ?
     \begin{itemize}[label=$\bullet$]
-     \item Lin / STM (\href{https://github.com/ocaml-multicore/multicoretests}{ocaml-multicore/multicoretest}):
+     \item Lin / STM (\href{https://github.com/ocaml-multicore/multicoretests}{ocaml-multicore/multicoretests}):
         \begin{itemize}[label=$\diamond$]
             \item Correctness
             \item Linearizability
@@ -196,7 +197,7 @@
     Numerous micro-optimizations:
     \begin{itemize}[label=$\diamond$]
         \item Improving algorithms,
-        \item Avoiding false sharing,
+        \item Preventing false sharing,
         \item Removing indirections etc..
         \item Experimental: some optimizations use \textbf{Obj.magic} (e.g. $\text{Saturn.Queue\_unsafe}$)
     \end{itemize}
