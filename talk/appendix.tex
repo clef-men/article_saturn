@@ -1,0 +1,26 @@
+\begin{frame}{Relaxed memory model (future work)}
+\centering
+\large
+\[
+    \aspec{
+      \mathrm{stack \mathhyphen inv}\ t
+    }{
+      v_0, \dots, v_n, \textcolor{red}{\mathcal{V}_0}, \dots, \textcolor{red}{\mathcal{V}_n}
+    }{
+      \mathrm{stack \mathhyphen model}\ t\ ((v_0, \textcolor{red}{\mathcal{V}_0}), \dots (v_n, \textcolor{red}{\mathcal{V}_n}))
+    }{
+      \texttt{stack\_push}\ t\ v, \textcolor{red}{\mathcal{V}}
+    }{
+      \mathrm{stack \mathhyphen model}\ t\ ((v, \textcolor{red}{\mathcal{V}}), (v_0, \textcolor{red}{\mathcal{V}_0}), \dots (v_n, \textcolor{red}{\mathcal{V}_n}))
+    }{
+      \texttt{()}
+    }{
+      \mathrm{True}
+    }
+\]
+\vfill
+\normalsize
+\emph{Cosmo: a concurrent separation logic for multicore \OCaml}, Mével, Jourdan \& Pottier \\
+\medskip
+\emph{Formal verification of a concurrent bounded queue in a weak memory model}, Mével \& Jourdan
+\end{frame}
