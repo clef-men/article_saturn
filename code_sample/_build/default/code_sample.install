@@ -1,8 +1,0 @@
-lib: [
-  "_build/install/default/lib/code_sample/META"
-  "_build/install/default/lib/code_sample/dune-package"
-  "_build/install/default/lib/code_sample/opam"
-]
-bin: [
-  "_build/install/default/bin/code_sample"
-]

@@ -9,7 +9,7 @@
             \item optimized
             \item verified
         \end{itemize}
-        \item<2-> Writting concurrent code is hard 
+        \item<2-> Writing concurrent code is hard 
     \end{itemize}
     }
     \vfill
@@ -77,7 +77,7 @@
                 \item optimized
                 \item verified
             \end{itemize}
-            \item Writting concurrent code is hard 
+            \item Writing concurrent code is hard 
             \begin{itemize}[label=$\diamond$]
                 \item bugs that can be hard to reproduce and understand
                 % \item progress properties: deadlock, starvation etc..
@@ -126,7 +126,7 @@
             \item optimized
             \item verified
         \end{itemize}
-        \item Writting concurrent code is hard 
+        \item Writing concurrent code is hard 
     \end{itemize}
     }
     \vfill
@@ -141,7 +141,7 @@
         \begin{itemize}[label=$\diamond$]
            \item Queues
            \only<2>{ \begin{itemize}[label=$\circ$]
-                \item multi-producer, multi-consumer (based on Michael-Scott queue algorithm)
+                \item multi-producer, multi-consumer \\(based on Michael-Scott queue algorithm)
                 \item single-producer, single-consumer 
                 % \color{white}\color<3>{red}(unsafe if misused)\color{black}
                 \item single-producer, multi-consumer 
@@ -150,7 +150,7 @@
                 \end{itemize}}
             \item<4-> Work-stealing deque
             \item<4-> Stacks 
-            \item<4-> Hashtable (opened PR)
+            \item<4-> Hashtable (almost in a PR)
             \item<4-> Skiplist: a sorted linked list with $o(\log(n))$ operations
             \item<4-> Bag
         \end{itemize}
@@ -193,13 +193,16 @@
 
  % une version expérimentale qui donne de meilleures performances et on aimerait bien qu'un jour on puisse avoir ces perfs  sans casser le type checker
 
-\begin{frame}{Optimizations}
+\begin{frame}{About optimizations}
     Numerous micro-optimizations:
     \begin{itemize}[label=$\diamond$]
         \item Improving algorithms,
         \item Preventing false sharing,
         \item Removing indirections etc..
-        \item Experimental: some optimizations use \textbf{Obj.magic} (e.g. $\text{Saturn.Queue\_unsafe}$)
+        \item Experimental: some optimizations use \textbf{Obj.magic} \\(e.g. $\text{Saturn.Queue\_unsafe}$)
+        \begin{itemize}[label=$\rightarrow$]
+            \item<2-> a source of inspiration for langage features for efficient concurrent code (e.g. opened \href{https://github.com/ocaml/ocaml/pull/13404}{PR} on atomic record fields)
+        \end{itemize}
     \end{itemize}
 \end{frame}
 
@@ -209,13 +212,11 @@
 %     \only<3>{\url{https://github.com/lyrm/saturn-benchmarks/}}
 %  \end{frame}
 
-  \begin{frame}{Is it any good ?}
-    \centering\includegraphics[width=0.8\linewidth]{images/Queue.pdf}
+  \begin{frame}{Benchmarks}
+    \centering\includegraphics[width=0.9\linewidth]{images/Queue.pdf}
  \end{frame}
 
 
- \begin{frame}{Is it any good ?}
-\centering
-    \includegraphics[width=0.8\linewidth]{images/Stack.pdf}
-     \only<2>{\url{https://github.com/lyrm/saturn-benchmarks/}}
-  \end{frame}
+ \begin{frame}{Benchmarks}
+    \centering\includegraphics[width=0.9\linewidth]{images/vesa_computer.pdf}
+ \end{frame}
