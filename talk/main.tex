@@ -110,7 +110,12 @@
 \begin{frame}[plain, noframenumbering]
 \LARGE
 \centering
-Thank you for your attention!
+\begin{tikzpicture}[remember picture,overlay]
+  \node[xshift=0mm,yshift=0mm,anchor=north west] at (current page.north west){%       
+  \includegraphics[width=1.15\linewidth]{images/saturn-face-on-main.jpg}};
+
+\node at (0,-3) {\textcolor{white}{Thank you for your attention!}};
+\end{tikzpicture}
 \end{frame}
 
 \appendix
